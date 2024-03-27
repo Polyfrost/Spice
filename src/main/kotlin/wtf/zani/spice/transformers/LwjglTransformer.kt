@@ -112,7 +112,15 @@ class LwjglTransformer : ClassTransformer() {
             "glUniform4fv" to Pair("glUniform4", "(ILjava/nio/FloatBuffer;)V"),
             "glUniformMatrix4fv" to Pair("glUniformMatrix4", "(IZLjava/nio/FloatBuffer;)V"),
             // org.lwjgl.opengl.GL21
-            "glTexGenfv" to Pair("glTexGen", "(IILjava/nio/FloatBuffer;)V")
+            "glTexGenfv" to Pair("glTexGen", "(IILjava/nio/FloatBuffer;)V"),
+            // org.lwjgl.opengl.ARBShaderObjects
+            "glGetObjectParameterfvARB" to Pair("glGetObjectParameterARB", "(IILjava/nio/FloatBuffer;)V"),
+            "glGetObjectParameterivARB" to Pair("glGetObjectParameterARB", "(IILjava/nio/IntBuffer;)V"),
+            "glUniform1fvARB" to Pair("glUniform1ARB", "(ILjava/nio/FloatBuffer;)V"),
+            "glUniform2fvARB" to Pair("glUniform2ARB", "(ILjava/nio/FloatBuffer;)V"),
+            "glUniform3fvARB" to Pair("glUniform3ARB", "(ILjava/nio/FloatBuffer;)V"),
+            "glUniform4fvARB" to Pair("glUniform4ARB", "(ILjava/nio/FloatBuffer;)V"),
+            "glUniformMatrix4fvARB" to Pair("glUniformMatrix4ARB", "(IZLjava/nio/FloatBuffer;)V"),
         )
 
         when (node.name) {
@@ -156,7 +164,8 @@ class LwjglTransformer : ClassTransformer() {
 
             "org/lwjgl/openal/AL10",
             "org/lwjgl/opengl/GL11",
-            "org/lwjgl/opengl/GL20" -> {
+            "org/lwjgl/opengl/GL20",
+            "org/lwjgl/opengl/ARBShaderObjects"-> {
                 node
                     .methods
                     .forEach { method ->
