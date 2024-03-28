@@ -9,7 +9,7 @@ import wtf.zani.spice.Spice;
 import wtf.zani.spice.lwjgl.input.Mouse;
 
 @Mixin(Minecraft.class)
-public class MinecraftMixin {
+public abstract class MinecraftMixin {
     @Inject(method = "createDisplay", at = @At("TAIL"))
     private void setupRawInput(CallbackInfo ci) {
         if (!Mouse.isRawInputSupported()) return;
