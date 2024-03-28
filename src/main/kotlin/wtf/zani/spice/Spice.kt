@@ -6,7 +6,6 @@ import org.apache.logging.log4j.LogManager
 import org.lwjgl.Version
 import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.glfw.GLFWErrorCallback
-import org.lwjgl.openal.AL10
 import org.lwjgl.openal.AL10.AL_VERSION
 import org.lwjgl.openal.AL10.alGetString
 import org.lwjgl.system.MemoryStack
@@ -118,7 +117,7 @@ object Spice {
     private fun initializeDebugSections() {
         val versionDebugSection = DebugSection()
 
-        versionDebugSection.lines += { "Spice: $version" }
+        versionDebugSection.lines += { "Version: $version" }
         versionDebugSection.lines += { "GLFW: $glfwVersion" }
         versionDebugSection.lines += {
             if (!this::openalVersion.isInitialized) openalVersion = alGetString(AL_VERSION)!!
