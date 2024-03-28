@@ -1,6 +1,5 @@
 package wtf.zani.spice.lwjgl.input
 
-import org.lwjgl.glfw.GLFW
 import wtf.zani.spice.input.getMouse
 import wtf.zani.spice.input.mouseHandler
 
