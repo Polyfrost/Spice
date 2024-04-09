@@ -8,12 +8,14 @@ import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.glfw.GLFWErrorCallback
 import org.lwjgl.openal.AL10.AL_VERSION
 import org.lwjgl.openal.AL10.alGetString
+import org.lwjgl.system.Configuration.GLFW_CHECK_THREAD0
 import org.lwjgl.system.MemoryStack
 import wtf.zani.spice.debug.DebugHelper
 import wtf.zani.spice.debug.DebugSection
 import wtf.zani.spice.input.inputSection
 import wtf.zani.spice.platform.Platform
 import wtf.zani.spice.util.getResource
+import wtf.zani.spice.util.isMac
 import wtf.zani.spice.util.isOptifineLoaded
 import kotlin.io.path.*
 
@@ -53,8 +55,10 @@ object Spice {
     @JvmStatic
     internal fun initialize() {
         Runtime.getRuntime().addShutdownHook(Thread {
-            if (options.needsSave) saveOptions()
+            if (this::options.isInitialized && options.needsSave) saveOptions()
         })
+
+        if (isMac()) GLFW_CHECK_THREAD0.set(false)
 
         GLFWErrorCallback.createPrint(System.err).set()
 
