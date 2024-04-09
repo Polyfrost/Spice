@@ -18,6 +18,15 @@ class LwjglTransformer : ClassTransformer() {
             return
         }
         if (node.name == "org/lwjgl/opengl/PixelFormat") return
+        if (node.name == "org/lwjgl/system/Library") {
+            node.methods.forEach { method ->
+                method.instructions
+                    .filter { it is LdcInsnNode && it.cst is String && it.cst == "java.library.path" }
+                    .forEach { (it as LdcInsnNode).cst = "spice.library.path" }
+            }
+
+            return
+        }
 
         val patch =
             getClassNode(remapLwjglClass(node.name))
