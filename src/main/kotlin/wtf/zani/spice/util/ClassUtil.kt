@@ -1,13 +1,11 @@
 package wtf.zani.spice.util
 
 import org.objectweb.asm.ClassReader
-import org.objectweb.asm.ClassWriter
-import org.objectweb.asm.ClassWriter.COMPUTE_FRAMES
 import org.objectweb.asm.tree.ClassNode
-import org.spongepowered.asm.transformers.MixinClassWriter
+import org.objectweb.asm.tree.InvokeDynamicInsnNode
+import org.objectweb.asm.tree.LdcInsnNode
 import wtf.zani.spice.Spice
 import java.net.URL
-import kotlin.io.path.Path
 
 val jarPath = Spice::class
     .java
@@ -39,5 +37,19 @@ fun getClassNode(name: String): ClassNode? {
 
     return classNode
 }
+
+fun getStrings(node: ClassNode): Set<String> =
+    node.methods.map { method ->
+        method.instructions
+            .filter { insn ->
+                (insn is LdcInsnNode && insn.cst is String)
+                        || (insn is InvokeDynamicInsnNode && insn.bsmArgs.any { it is String })
+            }
+            .map {
+                if (it is LdcInsnNode) listOf(it.cst as String)
+                else (it as InvokeDynamicInsnNode).bsmArgs.filterIsInstance<String>()
+            }
+            .flatten()
+    }.flatten().toSet()
 
 inline fun <reified T> internalName(): String = T::class.java.name.replace(".", "/")
