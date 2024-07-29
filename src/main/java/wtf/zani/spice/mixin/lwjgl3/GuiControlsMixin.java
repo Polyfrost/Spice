@@ -22,7 +22,7 @@ public abstract class GuiControlsMixin extends GuiScreen {
     private static GameSettings.Options[] optionsArr;
 
     @Unique
-    private final Options spice$options = Spice.getOptions$spice();
+    private final Options spice$options = Spice.getOptions$Spice();
     @Unique
     private GuiButton spice$rawInputButton;
 
@@ -47,7 +47,7 @@ public abstract class GuiControlsMixin extends GuiScreen {
         if (!Mouse.isRawInputSupported()) return;
 
         if (button.id == 200) {
-            Spice.saveOptions$spice();
+            Spice.getOptions$Spice();
         }
 
         if (button.id == spice$rawInputButton.id) {

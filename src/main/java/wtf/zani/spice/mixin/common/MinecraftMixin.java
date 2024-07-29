@@ -27,7 +27,7 @@ public abstract class MinecraftMixin {
     @Inject(method = "addGraphicsAndWorldToCrashReport", at = @At("HEAD"))
     private void addSpiceInfo(CrashReport instance, CallbackInfoReturnable<CrashReport> cir) {
         instance.getCategory().addCrashSectionCallable("Spice", Spice::getVersion);
-        instance.getCategory().addCrashSectionCallable("GLFW", Spice::getGlfwVersion$spice);
+        instance.getCategory().addCrashSectionCallable("GLFW", Spice::getGlfwVersion$Spice);
     }
 
     // in case we cause a crash too early
@@ -60,6 +60,6 @@ public abstract class MinecraftMixin {
 
     @Inject(method = "startGame", at = @At("HEAD"))
     private void initialize(CallbackInfo ci) {
-        Spice.initialize$spice();
+        Spice.initialize$Spice();
     }
 }

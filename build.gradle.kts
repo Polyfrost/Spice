@@ -10,7 +10,7 @@ plugins {
     kotlin("jvm") version "1.9.10"
     kotlin("plugin.serialization") version "1.9.10"
 
-    id("gg.essential.loom") version "0.10.0.+"
+    id("org.polyfrost.loom") version "1.6.polyfrost.5"
     id("dev.architectury.architectury-pack200") version "0.1.3"
     id("com.github.johnrengelman.shadow") version "8.1.1"
 }
@@ -55,10 +55,10 @@ loom {
         pack200Provider.set(Pack200Adapter())
         mixinConfig("spice.mixins.json")
     }
-    launchConfigs {
+    runConfigs {
         "client" {
             property("mixin.debug", "true")
-            arg("--tweakClass", "org.spongepowered.asm.launch.MixinTweaker")
+            programArgs("--tweakClass", "org.spongepowered.asm.launch.MixinTweaker")
         }
         remove(getByName("server"))
     }
@@ -82,7 +82,6 @@ dependencies {
     implementation("org.spongepowered:mixin:0.7.11-SNAPSHOT") {
         isTransitive = false
     }
-    annotationProcessor("org.spongepowered:mixin:0.8.5-SNAPSHOT")
 
     implementation("org.ow2.asm:asm-tree:9.7")
 
@@ -118,7 +117,7 @@ val remapJar by tasks.named<RemapJarTask>("remapJar") {
 
     from(tasks.shadowJar)
 
-    input.set(tasks.shadowJar.get().archiveFile)
+    inputFile.set(tasks.shadowJar.get().archiveFile)
 }
 
 val weaveJar by tasks.register<Jar>("weaveJar") {

@@ -17,6 +17,6 @@ import java.util.List;
 public abstract class GuiOverlayDebugMixin {
     @Inject(method = "getDebugInfoRight", locals = LocalCapture.CAPTURE_FAILHARD, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiOverlayDebug;isReducedDebug()Z"))
     private void addSpiceDebugInfo(CallbackInfoReturnable<List<String>> cir, long maxMemory, long totalMemory, long freeMemory, long usedMemory, List<String> lines) {
-        DebugHelper.applyExtraDebugInfo$spice(lines);
+        DebugHelper.applyExtraDebugInfo$Spice(lines);
     }
 }

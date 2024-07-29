@@ -14,6 +14,6 @@ public abstract class MinecraftMixin {
     private void setupRawInput(CallbackInfo ci) {
         if (!Mouse.isRawInputSupported()) return;
 
-        Mouse.setRawInput(Spice.getOptions$spice().rawInput);
+        Mouse.setRawInput(Spice.getOptions$Spice().rawInput);
     }
 }

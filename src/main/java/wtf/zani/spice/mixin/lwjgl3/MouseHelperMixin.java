@@ -18,7 +18,7 @@ public abstract class MouseHelperMixin {
 
     @Inject(method = "mouseXYChange", at = @At("HEAD"), cancellable = true)
     private void mouseUpdate(CallbackInfo ci) {
-        if (Spice.getPlatform$spice() != Platform.Weave) return;
+        if (Spice.getPlatform$Spice() != Platform.Weave) return;
 
         deltaX = Mouse.getDX();
         deltaY = Mouse.getDY();
