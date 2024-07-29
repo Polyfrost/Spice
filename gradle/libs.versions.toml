@@ -1,0 +1,20 @@
+[versions]
+lwjgl = "3.3.3"
+asm = "9.7"
+mixins = "0.8.5-SNAPSHOT"
+mixinsForge = "0.7.11-SNAPSHOT"
+
+[libraries]
+asmtree = { module = "org.ow2.asm:asm-tree", version.ref = "asm" }
+
+lwjgl = { module = "org.lwjgl:lwjgl", version.ref = "lwjgl" }
+
+lwjglGlfw = { module = "org.lwjgl:lwjgl-glfw", version.ref = "lwjgl" }
+lwjglOpenal = { module = "org.lwjgl:lwjgl-openal", version.ref = "lwjgl" }
+lwjglOpengl = { module = "org.lwjgl:lwjgl-opengl", version.ref = "lwjgl" }
+
+mixins = { module = "org.spongepowered:mixin", version.ref = "mixins" }
+mixinsForge = { module = "org.spongepowered:mixin", version.ref = "mixinsForge" }
+
+[bundles]
+lwjgl = ["lwjgl", "lwjglGlfw", "lwjglOpenal", "lwjglOpengl"]
