@@ -1,0 +1,19 @@
+[
+  {
+    "modid": "spice",
+    "name": "Spice",
+    "description": "optimization & qol mod for minecraft 1.8 and 1.12",
+    "version": "${version}",
+    "mcversion": "${mcVersionStr}",
+    "url": "https://github.com/Polyfrost/Spice",
+    "updateUrl": "",
+    "authorList": [
+      "Polyfrost",
+      "zani"
+    ],
+    "credits": "",
+    "logoFile": "",
+    "screenshots": [],
+    "dependencies": []
+  }
+]

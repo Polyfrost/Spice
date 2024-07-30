@@ -1,11 +1,10 @@
 @file:Suppress("UnstableApiUsage")
-// Shared build logic for all versions of OneConfig.
 
 import org.polyfrost.gradle.util.noServerRunConfigs
 import org.polyfrost.gradle.util.prebundle
 
 plugins {
-    kotlin("jvm") version "1.9.10"
+    kotlin("jvm") version libs.versions.kotlin.get()
     id(libs.plugins.pgt.main.get().pluginId)
     id(libs.plugins.pgt.defaults.repo.get().pluginId)
     id(libs.plugins.pgt.defaults.java.get().pluginId)
@@ -26,7 +25,7 @@ loom {
     runConfigs {
         "client" {
             if (project.platform.isLegacyForge) {
-                property("fml.coreMods.load", "wtf.zani.spice.platform.impl.forge.asm.TransformerPlugin")
+                property("fml.coreMods.load", "org.polyfrost.spice.platform.impl.forge.asm.TransformerPlugin")
                 programArgs("--tweakClass", tweakClass)
             }
             property("mixin.debug.export", "true")
@@ -42,6 +41,7 @@ loom {
             mixinConfig("spice.mixins.json")
         }
     }
+    mixin.defaultRefmapName.set("spice.mixins.refmap.json")
 }
 
 val shadowImpl by configurations.creating {
@@ -61,7 +61,7 @@ dependencies {
         val configuration = configurations.create("tempLwjglConfiguration")
         compileOnly(configuration(project(":modules:lwjgl"))!!)
         shadowImpl(prebundle(configuration, "lwjgl.jar"))
-        shadowImpl("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
+        shadowImpl(rootProject.libs.kotlinx.serialization.json)
         shadowImpl(project(":modules:common")) {
             isTransitive = false
         }
@@ -83,7 +83,7 @@ dependencies {
                     (if (platform.isForge) {
                         if (platform.isLegacyForge) "forge-legacy" else "forge-latest"
                     } else "fabric")
-                    + ":1.1.2"
+                    + ":1.2.1"
         )
     }
 }
@@ -99,7 +99,7 @@ tasks {
             manifest {
                 attributes += mapOf(
                     "FMLCorePluginContainsFMLMod" to "Yes, yes it does",
-                    "FMLCorePlugin" to "wtf.zani.spice.platform.impl.forge.asm.TransformerPlugin",
+                    "FMLCorePlugin" to "org.polyfrost.spice.platform.impl.forge.asm.TransformerPlugin",
                     "ModSide" to "CLIENT",
                     "ForceLoadAsMod" to true,
                     "TweakOrder" to "0",

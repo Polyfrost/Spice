@@ -1,5 +1,6 @@
 [versions]
 kotlin = "1.9.10"
+kotlinx-serialization = "1.6.2"
 lwjgl = "3.3.3"
 asm = "5.0.3"
 mixins = "0.8.5-SNAPSHOT" # todo i dont think this is needed?
@@ -23,6 +24,8 @@ mixinsForge = { module = "org.spongepowered:mixin", version.ref = "mixinsForge" 
 kotlin-common = { module = "org.jetbrains.kotlin:kotlin-stdlib-common", version.ref = "kotlin" }
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8", version.ref = "kotlin" }
+
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 
 annotations = { module = "org.jetbrains:annotations", version.ref = "annotations" }
 

@@ -1,6 +1,6 @@
 plugins {
-    kotlin("jvm") version "1.9.10" apply false
-    kotlin("plugin.serialization") version "1.9.10"
+    kotlin("jvm") version libs.versions.kotlin.get() apply false
+    kotlin("plugin.serialization") version libs.versions.kotlin.get() apply false
     alias(libs.plugins.pgt.defaults.repo) apply false
     idea
 }
@@ -8,7 +8,7 @@ plugins {
 val modVer = project.properties["version"]
 
 version = "$modVer"
-group = "wtf.zani"
+group = "org.polyfrost"
 
 subprojects {
     version = rootProject.version

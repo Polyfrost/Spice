@@ -10,7 +10,7 @@ dependencies {
     compileOnly(rootProject.libs.asmtree)
     compileOnly(rootProject.libs.bundles.lwjgl)
 
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
+    implementation(rootProject.libs.kotlinx.serialization.json)
 }
 
 tasks.processResources {

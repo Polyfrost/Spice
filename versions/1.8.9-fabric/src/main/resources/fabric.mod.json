@@ -3,8 +3,9 @@
   "id": "spice",
   "version": "${version}",
   "name": "Spice",
-  "description": "optimization & qol mod for minecraft 1.8",
+  "description": "optimization & qol mod for minecraft 1.8 and 1.12",
   "authors": [
+    "Polyfrost",
     "zani"
   ],
   "contact": {
@@ -15,7 +16,7 @@
   "environment": "client",
   "entrypoints": {
     "main": [
-      "wtf.zani.spice.platform.impl.fabric.FabricInitializer"
+      "org.polyfrost.spice.platform.impl.fabric.FabricInitializer"
     ]
   },
   "mixins": [

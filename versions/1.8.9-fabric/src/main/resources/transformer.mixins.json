@@ -1,11 +1,11 @@
 {
   "required": false,
   "minVersion": "0.7",
-  "package": "wtf.zani.spice.transformer.generated",
+  "package": "org.polyfrost.spice.transformer.generated",
   "compatibilityLevel": "JAVA_8",
   "mixins": [],
   "refmap": "transformer.mixins.refmap.json",
-  "plugin": "wtf.zani.spice.platform.impl.fabric.asm.TransformerPlugin",
+  "plugin": "org.polyfrost.spice.platform.impl.fabric.asm.TransformerPlugin",
   "injectors": {
     "defaultRequire": 1
   }

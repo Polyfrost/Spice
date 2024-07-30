@@ -1,6 +1,4 @@
-@file:Suppress("UnstableApiUsage", "DEPRECATION")
-
-// Shared build logic between all OneConfig modules to reduce boilerplate.
+@file:Suppress("UnstableApiUsage")
 
 plugins {
     idea

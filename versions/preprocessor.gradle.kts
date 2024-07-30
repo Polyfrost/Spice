@@ -1,5 +1,5 @@
 plugins {
-    kotlin("jvm") version "1.9.10" apply false
+    kotlin("jvm") version libs.versions.kotlin.get() apply false
     id(libs.plugins.pgt.root.get().pluginId)
 }
 
