@@ -1,34 +1,21 @@
-package wtf.zani.spice.patcher
+package wtf.zani.spice.patcher.lwjgl
 
 import net.weavemc.loader.api.util.asm
-import org.objectweb.asm.Opcodes.*
+import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.FieldNode
-import org.objectweb.asm.tree.LdcInsnNode
 import org.objectweb.asm.tree.MethodNode
-import wtf.zani.spice.patcher.fixes.OpenAlFixes
-import wtf.zani.spice.patcher.fixes.OpenGlFixes
 import wtf.zani.spice.platform.api.IClassTransformer
-import wtf.zani.spice.util.internalName
-import java.nio.ByteBuffer
 
 object LwjglTransformer : IClassTransformer {
     val provider = LwjglProvider()
+    override fun getClassNames(): Array<String>? {
+        return null
+    }
 
     override fun transform(node: ClassNode) {
         if (!node.name.startsWith("org/lwjgl")) return
         if (node.name == "org/lwjgl/opengl/PixelFormat") return
-        if (node.name == "org/lwjgl/system/Library") {
-            node.methods.forEach { method ->
-                (method as MethodNode).instructions
-                    .iterator()
-                    .asSequence()
-                    .filter { it is LdcInsnNode && it.cst is String && it.cst == "java.library.path" }
-                    .forEach { (it as LdcInsnNode).cst = "spice.library.path" }
-            }
-
-            return
-        }
 
         val patch =
             provider.getClassNode(node.name)
@@ -48,7 +35,7 @@ object LwjglTransformer : IClassTransformer {
             node
                 .fields
                 .forEach { field ->
-                    (field as FieldNode).access = field.access and ACC_FINAL.inv()
+                    (field as FieldNode).access = field.access and Opcodes.ACC_FINAL.inv()
                 }
         }
 
@@ -113,20 +100,20 @@ object LwjglTransformer : IClassTransformer {
 
                 createMethod.name = "create"
                 createMethod.desc = "()V"
-                createMethod.access = ACC_PUBLIC + ACC_STATIC + ACC_SYNTHETIC
+                createMethod.access = Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC + Opcodes.ACC_SYNTHETIC
 
                 destroyMethod.name = "destroy"
                 destroyMethod.desc = "()V"
-                destroyMethod.access = ACC_PUBLIC + ACC_STATIC + ACC_SYNTHETIC
+                destroyMethod.access = Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC + Opcodes.ACC_SYNTHETIC
 
                 createMethod.instructions = asm {
-                    invokestatic(internalName<OpenAlFixes>(), "create", "()V")
+                    invokestatic("wtf/zani/spice/patcher/fixes/OpenAlFixes", "create", "()V")
 
                     _return
                 }
 
                 destroyMethod.instructions = asm {
-                    invokestatic(internalName<OpenAlFixes>(), "destroyContext", "()V")
+                    invokestatic("wtf/zani/spice/patcher/fixes/OpenAlFixes", "destroyContext", "()V")
 
                     _return
                 }
@@ -151,15 +138,15 @@ object LwjglTransformer : IClassTransformer {
                     val method = MethodNode()
 
                     method.name = "glShaderSource"
-                    method.desc = "(IL${internalName<ByteBuffer>()};)V"
-                    method.access = ACC_PUBLIC + ACC_STATIC + ACC_SYNTHETIC
+                    method.desc = "(ILjava/nio/ByteBuffer;)V"
+                    method.access = Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC + Opcodes.ACC_SYNTHETIC
 
                     method.instructions = asm {
                         iload(0)
                         aload(1)
 
                         invokestatic(
-                            internalName<OpenGlFixes>(),
+                            "wtf/zani/spice/patcher/fixes/OpenGlFixes",
                             method.name,
                             method.desc
                         )

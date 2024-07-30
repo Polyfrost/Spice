@@ -4,21 +4,25 @@ import org.objectweb.asm.tree.ClassNode
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo
 import org.spongepowered.asm.service.MixinService
+import wtf.zani.spice.platform.api.IClassTransformer
+import wtf.zani.spice.platform.api.Transformer
 import wtf.zani.spice.platform.bootstrapTransformer
-import wtf.zani.spice.platform.impl.fabric.FabricPlatform
 import wtf.zani.spice.platform.impl.fabric.util.collectResources
 import wtf.zani.spice.util.UrlByteArrayConnection
+import java.lang.reflect.Method
 import java.net.URL
 import java.net.URLClassLoader
 import java.net.URLConnection
 import java.net.URLStreamHandler
 
-class TransformerPlugin : IMixinConfigPlugin {
+class TransformerPlugin : IMixinConfigPlugin, Transformer {
     private val mixinCache = mutableMapOf<String, ByteArray>()
     private val classMapping = mutableMapOf<String, String>()
     private val transformedClasses = mutableSetOf<String>()
 
-    private lateinit var platform: FabricPlatform
+    private val transformers = mutableListOf<IClassTransformer>()
+    private var addUrl: Method? = null
+    private var loader: ClassLoader? = null
 
     override fun onLoad(mixinPackage: String) {
         val classLoader = javaClass.classLoader
@@ -39,9 +43,10 @@ class TransformerPlugin : IMixinConfigPlugin {
         val urlLoader = urlLoaderField.get(classLoader) as URLClassLoader
         val classTracker = MixinService.getService().classTracker
 
-        platform = FabricPlatform(classLoader, addUrl)
+        this.addUrl = addUrl
+        this.loader = classLoader
 
-        bootstrapTransformer(platform)
+        bootstrapTransformer(this)
 
         collectResources(urlLoader.urLs)
             .filter { it.endsWith(".class") }
@@ -55,7 +60,7 @@ class TransformerPlugin : IMixinConfigPlugin {
                 classMapping["/$base/$it.class"] = it
             }
 
-        platform.appendToClassPath(URL("transformer", null, -1, "/", object : URLStreamHandler() {
+        appendToClassPath(URL("transformer", null, -1, "/", object : URLStreamHandler() {
             override fun openConnection(url: URL): URLConnection? {
                 if (!classMapping.contains(url.path)) return null
 
@@ -87,7 +92,7 @@ class TransformerPlugin : IMixinConfigPlugin {
     ) {
         if (transformedClasses.contains(targetClassName)) return
 
-        platform.transformers.forEach { it.transform(targetClass) }
+        transformers.forEach { it.transform(targetClass) }
         transformedClasses.add(targetClassName)
     }
 
@@ -101,5 +106,15 @@ class TransformerPlugin : IMixinConfigPlugin {
 
         targetClass.interfaces.remove(mixinClassName.replace(".", "/"))
         mixinCache.remove(mixinClassName)
+    }
+
+    override fun addTransformer(transformer: IClassTransformer) {
+        transformers += transformer
+    }
+
+    override fun appendToClassPath(url: URL) {
+        println("appending $url to the classpath")
+
+        addUrl?.let { it(loader, url) }
     }
 }

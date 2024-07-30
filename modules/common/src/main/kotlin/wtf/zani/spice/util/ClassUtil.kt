@@ -22,4 +22,3 @@ fun getStrings(node: MethodNode): Set<String> =
         }
         .flatten().toSet()
 
-inline fun <reified T> internalName(): String = T::class.java.name.replace(".", "/")

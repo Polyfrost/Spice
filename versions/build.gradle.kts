@@ -26,6 +26,7 @@ loom {
     runConfigs {
         "client" {
             if (project.platform.isLegacyForge) {
+                property("fml.coreMods.load", "wtf.zani.spice.platform.impl.forge.asm.TransformerPlugin")
                 programArgs("--tweakClass", tweakClass)
             }
             property("mixin.debug.export", "true")
@@ -97,6 +98,8 @@ tasks {
         if (platform.isLegacyForge) {
             manifest {
                 attributes += mapOf(
+                    "FMLCorePluginContainsFMLMod" to "Yes, yes it does",
+                    "FMLCorePlugin" to "wtf.zani.spice.platform.impl.forge.asm.TransformerPlugin",
                     "ModSide" to "CLIENT",
                     "ForceLoadAsMod" to true,
                     "TweakOrder" to "0",
@@ -122,9 +125,14 @@ tasks {
             exclude("fabric.mod.json")
             if (platform.isLegacyForge) {
                 exclude("**/mods.toml")
-                exclude("META-INF/versions/**")
-                exclude("**/module-info.class")
-                exclude("**/package-info.class")
+                exclude(
+                    "**/module-info.class",
+                    "**/package-info.class",
+                    "META-INF/proguard/**",
+                    "META-INF/maven/**",
+                    "META-INF/versions/**",
+                    "META-INF/com.android.tools/**",
+                )
             }
         }
     }

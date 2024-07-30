@@ -1,4 +1,4 @@
-package wtf.zani.spice.patcher
+package wtf.zani.spice.patcher.lwjgl
 
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.tree.ClassNode

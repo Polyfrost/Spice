@@ -7,6 +7,10 @@ import wtf.zani.spice.platform.api.IClassTransformer
 import wtf.zani.spice.util.getStrings
 
 object LunarTransformer : IClassTransformer {
+    override fun getClassNames(): Array<String>? {
+        return null
+    }
+
     override fun transform(node: ClassNode) {
         if (!node.name.startsWith("com/moonsworth/lunar/")) return
 
