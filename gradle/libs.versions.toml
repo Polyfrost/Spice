@@ -1,8 +1,12 @@
 [versions]
+kotlin = "1.9.10"
 lwjgl = "3.3.3"
-asm = "9.7"
-mixins = "0.8.5-SNAPSHOT"
+asm = "5.0.3"
+mixins = "0.8.5-SNAPSHOT" # todo i dont think this is needed?
 mixinsForge = "0.7.11-SNAPSHOT"
+
+pgt = "0.6.6"
+annotations = "24.1.0"
 
 [libraries]
 asmtree = { module = "org.ow2.asm:asm-tree", version.ref = "asm" }
@@ -16,5 +20,19 @@ lwjglOpengl = { module = "org.lwjgl:lwjgl-opengl", version.ref = "lwjgl" }
 mixins = { module = "org.spongepowered:mixin", version.ref = "mixins" }
 mixinsForge = { module = "org.spongepowered:mixin", version.ref = "mixinsForge" }
 
+kotlin-common = { module = "org.jetbrains.kotlin:kotlin-stdlib-common", version.ref = "kotlin" }
+kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
+kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8", version.ref = "kotlin" }
+
+annotations = { module = "org.jetbrains:annotations", version.ref = "annotations" }
+
 [bundles]
 lwjgl = ["lwjgl", "lwjglGlfw", "lwjglOpenal", "lwjglOpengl"]
+kotlin = ["kotlin-reflect", "kotlin-stdlib", "kotlin-common"]
+
+[plugins]
+pgt-main = { id = "org.polyfrost.multi-version", version.ref = "pgt" }
+pgt-root = { id = "org.polyfrost.multi-version.root", version.ref = "pgt" }
+pgt-defaults-repo = { id = "org.polyfrost.defaults.repo", version.ref = "pgt" }
+pgt-defaults-java = { id = "org.polyfrost.defaults.java", version.ref = "pgt" }
+pgt-defaults-loom = { id = "org.polyfrost.defaults.loom", version.ref = "pgt" }
