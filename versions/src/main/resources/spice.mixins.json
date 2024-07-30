@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "minVersion": "0.7",
+  "package": "wtf.zani.spice.mixin",
+  "compatibilityLevel": "JAVA_8",
+  "client": [
+    "common.GuiOverlayDebugMixin",
+    "common.MinecraftMixin",
+    "lwjgl3.GuiControlsMixin",
+    "lwjgl3.MinecraftMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
