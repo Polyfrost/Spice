@@ -8,6 +8,7 @@ import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.tree.ClassNode
 import wtf.zani.spice.platform.api.IClassTransformer
 import wtf.zani.spice.platform.api.Transformer
+import wtf.zani.spice.platform.bootstrapTransformer
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -19,6 +20,11 @@ class ClassTransformer : net.minecraft.launchwrapper.IClassTransformer, Transfor
         ArrayListMultimap.create()
     private val transformers: MutableList<IClassTransformer> = ArrayList()
     private val outputBytecode = System.getProperty("debugBytecode", "false").toBoolean()
+
+    init {
+        bootstrapTransformer(this)
+    }
+
     private fun registerTransformer(transformer: IClassTransformer) {
         val classes = transformer.getClassNames()
         if (classes == null) {
