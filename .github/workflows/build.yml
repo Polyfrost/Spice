@@ -24,6 +24,8 @@ jobs:
 
       - name: Grant execute permission
         run: chmod +x ./gradlew
+      - name: Sync Gradle
+        run: ./gradlew
       - name: Build with Gradle
         run: ./gradlew build
       - name: Upload Artifact
