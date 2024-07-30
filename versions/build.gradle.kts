@@ -140,32 +140,16 @@ tasks {
     remapJar {
         inputFile.set(shadowJar.get().archiveFile)
 
-        manifest {
-            val attributesMap = buildMap<String, Any> {
-                if (platform.isForge) {
-                    putAll(
-                        mapOf(
-                            "ModSide" to "CLIENT",
-                            "ForceLoadAsMod" to true,
-                            "TweakOrder" to "0",
-                            "MixinConfigs" to "spice.mixins.json",
-                            "TweakClass" to tweakClass
-                        )
-                    )
-                }
-                putAll(
-                    mapOf(
-                        "Specification-Title" to "Spice",
-                        "Specification-Vendor" to "Polyfrost",
-                        "Specification-Version" to "1", // We are version 1 of ourselves, whatever the hell that means
-                        "Implementation-Title" to rootProject.name,
-                        "Implementation-Version" to project.version,
-                        "Implementation-Vendor" to "Polyfrost",
-                        "Implementation-Timestamp" to SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(`java.util`.Date())
-                    )
+        if (platform.isLegacyForge) {
+            manifest {
+                attributes += mapOf(
+                    "ModSide" to "CLIENT",
+                    "ForceLoadAsMod" to true,
+                    "TweakOrder" to "0",
+                    "MixinConfigs" to "spice.mixins.json",
+                    "TweakClass" to tweakClass
                 )
             }
-            attributes(attributesMap)
         }
     }
 }
