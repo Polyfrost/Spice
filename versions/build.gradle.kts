@@ -3,8 +3,6 @@
 
 import org.polyfrost.gradle.util.noServerRunConfigs
 import org.polyfrost.gradle.util.prebundle
-import java.text.SimpleDateFormat
-import java.util.zip.ZipFile
 
 plugins {
     kotlin("jvm") version "1.9.10"
@@ -51,10 +49,24 @@ val shadowImpl by configurations.creating {
 
 dependencies {
     shadowImpl(project(":modules:core")) {
-        exclude("org.apache.logging.log4j")
-        exclude("org.ow2.asm")
+        if (platform.isFabric) {
+            exclude("org.apache.logging.log4j")
+            exclude("org.ow2.asm")
+        } else {
+            isTransitive = false
+        }
     }
-    compileOnly(project(":modules:lwjgl"))
+    if (platform.isLegacyForge) {
+        val configuration = configurations.create("tempLwjglConfiguration")
+        compileOnly(configuration(project(":modules:lwjgl"))!!)
+        shadowImpl(prebundle(configuration, "lwjgl.jar"))
+        shadowImpl("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
+        shadowImpl(project(":modules:common")) {
+            isTransitive = false
+        }
+    } else {
+        compileOnly(project(":modules:lwjgl"))
+    }
 
     if (platform.isLegacyForge) {
         shadowImpl(libs.mixinsForge) {
@@ -82,6 +94,17 @@ tasks {
         archiveClassifier.set("no-deps")
 
         destinationDirectory.set(layout.buildDirectory.dir("badjars"))
+        if (platform.isLegacyForge) {
+            manifest {
+                attributes += mapOf(
+                    "ModSide" to "CLIENT",
+                    "ForceLoadAsMod" to true,
+                    "TweakOrder" to "0",
+                    "MixinConfigs" to "spice.mixins.json",
+                    "TweakClass" to tweakClass
+                )
+            }
+        }
     }
 
     shadowJar {
@@ -139,17 +162,5 @@ tasks {
 
     remapJar {
         inputFile.set(shadowJar.get().archiveFile)
-
-        if (platform.isLegacyForge) {
-            manifest {
-                attributes += mapOf(
-                    "ModSide" to "CLIENT",
-                    "ForceLoadAsMod" to true,
-                    "TweakOrder" to "0",
-                    "MixinConfigs" to "spice.mixins.json",
-                    "TweakClass" to tweakClass
-                )
-            }
-        }
     }
 }
