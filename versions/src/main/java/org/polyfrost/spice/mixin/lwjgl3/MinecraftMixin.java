@@ -1,8 +1,8 @@
 package org.polyfrost.spice.mixin.lwjgl3;
 
 import net.minecraft.client.Minecraft;
-import org.lwjgl.input.Mouse;
 import org.polyfrost.spice.Spice;
+import org.polyfrost.spice.api.Mouse;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
