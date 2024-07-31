@@ -58,6 +58,11 @@ dependencies {
         }
     }
 
+    if (platform.isLegacyFabric) { // Legacy Fabric bug
+        compileOnly(runtimeOnly("org.apache.logging.log4j:log4j-core:2.8.1")!!)
+        compileOnly(runtimeOnly("org.apache.logging.log4j:log4j-api:2.8.1")!!)
+    }
+
     shadowImpl(rootProject.libs.kotlinx.coroutines)
 
     if (platform.isLegacyForge) {
