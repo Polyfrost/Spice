@@ -4,8 +4,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.apache.logging.log4j.LogManager
 import org.lwjgl.Version
-import org.lwjgl.glfw.GLFW.glfwGetVersion
-import org.lwjgl.glfw.GLFW.glfwRawMouseMotionSupported
+import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.openal.AL10.AL_VERSION
 import org.lwjgl.openal.AL10.alGetString
 import org.lwjgl.system.Configuration.GLFW_CHECK_THREAD0
@@ -15,7 +14,10 @@ import org.polyfrost.spice.debug.DebugSection
 import org.polyfrost.spice.platform.api.Platform
 import org.polyfrost.spice.util.isMac
 import org.polyfrost.spice.util.isOptifineLoaded
-import kotlin.io.path.*
+import kotlin.io.path.createDirectories
+import kotlin.io.path.exists
+import kotlin.io.path.readText
+import kotlin.io.path.writeText
 
 object Spice {
     @JvmStatic
@@ -59,8 +61,7 @@ object Spice {
     lateinit var openalVersion: String
         private set
 
-    private val configDirectory = Path("spice").toAbsolutePath()
-    private val configFile = configDirectory.resolve("config.json")
+    private val configFile = spiceDirectory.resolve("config.json")
     private val json = Json { ignoreUnknownKeys = true }
 
     @JvmStatic
@@ -74,7 +75,7 @@ object Spice {
         })
 
         if (isMac()) GLFW_CHECK_THREAD0.set(false)
-
+        if (!glfwInit()) throw RuntimeException("Failed to initialize GLFW")
         if (isOptifineLoaded()) logger.warn("OptiFine is enabled! No performance patches will be applied.")
 
         // todo: store in jar and load
@@ -92,15 +93,15 @@ object Spice {
             }
 
         logger.info("Spice Version: $version")
-        logger.info("Platform: $platform")
+        logger.info("Platform: ${platform.id}")
 
         initializeDebugSections()
     }
 
     @JvmStatic
     fun saveOptions() {
-        if (!configDirectory.exists()) {
-            configDirectory.createDirectories()
+        if (!spiceDirectory.exists()) {
+            spiceDirectory.createDirectories()
         }
 
         if (!options.needsSave) return

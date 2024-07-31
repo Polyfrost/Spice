@@ -57,6 +57,9 @@ dependencies {
             isTransitive = false
         }
     }
+
+    shadowImpl(rootProject.libs.kotlinx.coroutines)
+
     if (platform.isLegacyForge) {
         val configuration = configurations.create("tempLwjglConfiguration")
         compileOnly(configuration(project(":modules:lwjgl"))!!)

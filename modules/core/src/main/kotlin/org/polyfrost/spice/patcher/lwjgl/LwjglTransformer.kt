@@ -1,6 +1,7 @@
 package org.polyfrost.spice.patcher.lwjgl
 
 import net.weavemc.loader.api.util.asm
+import org.apache.logging.log4j.LogManager
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.FieldNode
@@ -8,7 +9,10 @@ import org.objectweb.asm.tree.MethodNode
 import org.polyfrost.spice.platform.api.IClassTransformer
 
 object LwjglTransformer : IClassTransformer {
+    private val logger = LogManager.getLogger("Spice/Transformer")!!
+
     val provider = LwjglProvider()
+
     override fun getClassNames(): Array<String>? {
         return null
     }
@@ -21,11 +25,14 @@ object LwjglTransformer : IClassTransformer {
             provider.getClassNode(node.name)
                 ?: return
 
-        println("Patching ${node.name} with ${patch.name}")
+        logger.debug("Patching ${node.name} with ${patch.name}")
 
         node.superName = patch.superName
         node.interfaces = patch.interfaces
         node.access = patch.access
+
+        node.sourceFile = patch.sourceFile
+        node.sourceDebug = patch.sourceDebug
 
         node.version = patch.version
         node.methods.clear()

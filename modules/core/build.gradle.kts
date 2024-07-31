@@ -8,8 +8,10 @@ dependencies {
     compileOnly(project(":modules:lwjgl"))
 
     compileOnly(rootProject.libs.asmtree)
+    compileOnly(rootProject.libs.mixins)
     compileOnly(rootProject.libs.bundles.lwjgl)
 
+    implementation(rootProject.libs.kotlinx.coroutines)
     implementation(rootProject.libs.kotlinx.serialization.json)
 }
 

@@ -12,7 +12,7 @@ subprojects {
 
     dependencies {
         "implementation"(rootProject.libs.annotations)
-        if (name != "common") "implementation"(project(":modules:common"))
+        if (name != "common" && name != "lwjgl") "implementation"(project(":modules:common"))
         "implementation"(rootProject.libs.bundles.kotlin)
     }
 
