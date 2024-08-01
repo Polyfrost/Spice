@@ -16,7 +16,7 @@ import org.polyfrost.spice.platform.api.IClassTransformer
 import org.polyfrost.spice.platform.api.Transformer
 import org.polyfrost.spice.platform.bootstrapTransformer
 import org.polyfrost.spice.platform.impl.forge.util.LaunchWrapperLogger
-import org.polyfrost.spice.platform.impl.forge.util.collectResources
+import org.polyfrost.spice.util.collectResources
 import org.polyfrost.spice.util.SpiceClassWriter
 import java.net.URL
 import java.util.concurrent.TimeUnit

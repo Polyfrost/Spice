@@ -11,7 +11,7 @@ import org.polyfrost.spice.patcher.loadCache
 import org.polyfrost.spice.platform.api.IClassTransformer
 import org.polyfrost.spice.platform.api.Transformer
 import org.polyfrost.spice.platform.bootstrapTransformer
-import org.polyfrost.spice.platform.impl.fabric.util.collectResources
+import org.polyfrost.spice.util.collectResources
 import org.polyfrost.spice.util.UrlByteArrayConnection
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo
