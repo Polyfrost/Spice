@@ -10,12 +10,9 @@ import org.polyfrost.spice.platform.api.IClassTransformer
 
 object LwjglTransformer : IClassTransformer {
     private val logger = LogManager.getLogger("Spice/Transformer")!!
+    override val targets = null
 
     val provider = LwjglProvider()
-
-    override fun getClassNames(): Array<String>? {
-        return null
-    }
 
     override fun transform(node: ClassNode) {
         if (!node.name.startsWith("org/lwjgl")) return

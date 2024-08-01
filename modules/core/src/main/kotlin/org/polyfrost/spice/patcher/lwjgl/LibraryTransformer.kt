@@ -6,9 +6,7 @@ import org.objectweb.asm.tree.MethodNode
 import org.polyfrost.spice.platform.api.IClassTransformer
 
 object LibraryTransformer : IClassTransformer {
-    override fun getClassNames(): Array<String> {
-        return arrayOf("org.lwjgl.system.Library")
-    }
+    override val targets = arrayOf("org.lwjgl.system.Library")
 
     override fun transform(node: ClassNode) {
         node.methods.forEach { method ->

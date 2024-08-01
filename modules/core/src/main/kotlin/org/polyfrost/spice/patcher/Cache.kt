@@ -1,16 +1,16 @@
 package org.polyfrost.spice.patcher
 
-import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassWriter.COMPUTE_FRAMES
 import org.objectweb.asm.tree.ClassNode
+import org.objectweb.asm.tree.MethodNode
 import org.polyfrost.spice.patcher.lwjgl.LibraryTransformer
 import org.polyfrost.spice.patcher.lwjgl.LwjglTransformer
 import org.polyfrost.spice.spiceDirectory
-import org.spongepowered.asm.transformers.MixinClassWriter
+import org.polyfrost.spice.util.SpiceClassWriter
 import java.util.jar.JarFile
 import java.util.jar.JarOutputStream
 import java.util.zip.ZipEntry
@@ -51,72 +51,76 @@ fun loadCacheBuffers(hash: String): Map<String, ByteArray> {
         }
 }
 
-suspend fun buildCache(hash: String, `in`: List<ClassNode>): Map<String, ClassNode> {
+fun buildCache(hash: String, `in`: List<ClassNode>): Pair<Map<String, ClassNode>, Map<String, ByteArray>> {
     // todo: abuse coroutines.
-    return coroutineScope {
-        val transformers = arrayOf(
-            LwjglTransformer,
-            LibraryTransformer
-        )
+    val transformers = arrayOf(
+        LwjglTransformer,
+        LibraryTransformer
+    )
 
-        val transformable = mutableSetOf<String>()
-        val provider = LwjglTransformer.provider
+    val transformable = mutableSetOf<String>()
+    val provider = LwjglTransformer.provider
 
-        val transformed = mutableMapOf<String, ClassNode>()
-        val buffers = mutableMapOf<String, ByteArray>()
+    val transformed = mutableMapOf<String, ClassNode>()
+    val buffers = mutableMapOf<String, ByteArray>()
 
-        `in`.forEach { node ->
-            transformable.add(node.name)
+    `in`.forEach { node ->
+        transformable.add(node.name)
+        transformers.forEach transform@{ transformer ->
+            val targets = transformer.targets
 
-            transformers.forEach transform@{ transformer ->
-                val targets = transformer.getClassNames()
+            if (targets != null
+                && !targets.contains(node.name.replace("/", "."))
+            ) return@transform
 
-                if (targets != null
-                    && !targets.contains(node.name.replace("/", "."))
-                ) return@transform
-
-                transformer.transform(node)
-            }
-
-            transformed[node.name] = node
-            buffers["${node.name}.class"] =
-                MixinClassWriter(COMPUTE_FRAMES)
-                    .also { node.accept(it) }
-                    .toByteArray()
+            transformer.transform(node)
         }
 
-        provider.allEntries.forEach { entry ->
-            if (!entry.endsWith(".class") || !entry.startsWith("org/lwjgl/")) return@forEach
+        node.methods.forEach { method ->
+            method as MethodNode
 
-            if (!buffers.contains(entry)) {
-                buffers[entry] =
-                    provider.readFile(entry) ?: return@forEach
-            }
+            // this fixes stuff because sometimes exceptions are null (????)
+            if (method.exceptions == null) method.exceptions = mutableListOf<String>()
         }
 
-        JarOutputStream(cachePath(hash).outputStream())
-            .use { out ->
-                out.putNextEntry(ZipEntry("cache-manifest.json"))
-                out.write(
-                    Json.encodeToString<CacheManifest>(
-                        CacheManifest(
-                            transformable.toList()
-                        )
-                    ).toByteArray(Charsets.UTF_8)
-                )
-                out.closeEntry()
-
-                buffers.forEach { (name, buffer) ->
-                    out.putNextEntry(ZipEntry(name))
-                    out.write(buffer)
-                    out.closeEntry()
-                }
-
-                out.finish()
-            }
-
-        transformed
+        transformed[node.name] = node
+        buffers["${node.name}.class"] =
+            SpiceClassWriter(COMPUTE_FRAMES)
+                .also { node.accept(it) }
+                .toByteArray()
     }
+
+    provider.allEntries.forEach { entry ->
+        if (!entry.endsWith(".class") || !entry.startsWith("org/lwjgl/")) return@forEach
+
+        if (!buffers.contains(entry)) {
+            buffers[entry] =
+                provider.readFile(entry) ?: return@forEach
+        }
+    }
+
+    JarOutputStream(cachePath(hash).outputStream())
+        .use { out ->
+            out.putNextEntry(ZipEntry("cache-manifest.json"))
+            out.write(
+                Json.encodeToString<CacheManifest>(
+                    CacheManifest(
+                        transformable.toList()
+                    )
+                ).toByteArray(Charsets.UTF_8)
+            )
+            out.closeEntry()
+
+            buffers.forEach { (name, buffer) ->
+                out.putNextEntry(ZipEntry(name))
+                out.write(buffer)
+                out.closeEntry()
+            }
+
+            out.finish()
+        }
+
+    return Pair(transformed, buffers)
 }
 
 private fun cachePath(hash: String) =

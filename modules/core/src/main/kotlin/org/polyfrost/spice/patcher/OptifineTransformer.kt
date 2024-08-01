@@ -7,9 +7,7 @@ import org.objectweb.asm.tree.MethodNode
 import org.polyfrost.spice.platform.api.IClassTransformer
 
 object OptifineTransformer : IClassTransformer {
-    override fun getClassNames(): Array<String> {
-        return arrayOf("net.optifine.shaders.Shaders")
-    }
+    override val targets = arrayOf("net.optifine.shaders.Shaders")
 
     override fun transform(node: ClassNode) {
         node.methods.forEach { method ->

@@ -8,6 +8,7 @@ interface IClassTransformer {
      * If null, the transformer will transform all classes
      * Format like net.minecraft.client.Minecraft, not like net/minecraft/client/Minecraft
      */
-    fun getClassNames(): Array<String>?
+    val targets: Array<String>?
+
     fun transform(node: ClassNode)
 }

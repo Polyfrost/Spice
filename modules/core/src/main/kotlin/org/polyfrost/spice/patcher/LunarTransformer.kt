@@ -7,9 +7,7 @@ import org.polyfrost.spice.platform.api.IClassTransformer
 import org.polyfrost.spice.util.getStrings
 
 object LunarTransformer : IClassTransformer {
-    override fun getClassNames(): Array<String>? {
-        return null
-    }
+    override val targets = null
 
     override fun transform(node: ClassNode) {
         if (!node.name.startsWith("com/moonsworth/lunar/")) return

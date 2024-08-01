@@ -1,7 +1,6 @@
 @file:Suppress("UnstableApiUsage")
 
 import org.polyfrost.gradle.util.noServerRunConfigs
-import org.polyfrost.gradle.util.prebundle
 
 plugins {
     kotlin("jvm") version libs.versions.kotlin.get()
@@ -12,7 +11,9 @@ plugins {
     id("com.github.johnrengelman.shadow")
     `java-library`
 }
+
 val tweakClass = "org.spongepowered.asm.launch.MixinTweaker"
+val transformerPlugin = "org.polyfrost.spice.platform.impl.forge.TransformerPlugin"
 
 base.archivesName = "Spice-${platform}"
 
@@ -25,7 +26,7 @@ loom {
     runConfigs {
         "client" {
             if (project.platform.isLegacyForge) {
-                property("fml.coreMods.load", "org.polyfrost.spice.platform.impl.forge.asm.TransformerPlugin")
+                property("fml.coreMods.load", transformerPlugin)
                 programArgs("--tweakClass", tweakClass)
             }
             property("mixin.debug.export", "true")
@@ -66,9 +67,6 @@ dependencies {
     shadowImpl(rootProject.libs.kotlinx.coroutines)
 
     if (platform.isLegacyForge) {
-        val configuration = configurations.create("tempLwjglConfiguration")
-        compileOnly(configuration(project(":modules:lwjgl"))!!)
-        shadowImpl(prebundle(configuration, "lwjgl.jar"))
         shadowImpl(rootProject.libs.kotlinx.serialization.json)
         shadowImpl(project(":modules:common")) {
             isTransitive = false
@@ -107,7 +105,7 @@ tasks {
             manifest {
                 attributes += mapOf(
                     "FMLCorePluginContainsFMLMod" to "Yes, yes it does",
-                    "FMLCorePlugin" to "org.polyfrost.spice.platform.impl.forge.asm.TransformerPlugin",
+                    "FMLCorePlugin" to transformerPlugin,
                     "ModSide" to "CLIENT",
                     "ForceLoadAsMod" to true,
                     "TweakOrder" to "0",
@@ -146,6 +144,14 @@ tasks {
     }
 
     processResources {
+        from(
+            project(":modules:lwjgl")
+                .tasks
+                .shadowJar
+                .get()
+                .archiveFile
+        )
+
         inputs.property("id", rootProject.properties["mod_id"].toString())
         inputs.property("name", rootProject.name)
         inputs.property("java", 8)

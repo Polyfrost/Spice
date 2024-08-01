@@ -1,7 +1,6 @@
 package org.polyfrost.spice.platform.impl.fabric.asm
 
 import com.google.common.base.Stopwatch
-import kotlinx.coroutines.runBlocking
 import org.apache.logging.log4j.LogManager
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.tree.ClassNode
@@ -39,6 +38,8 @@ class TransformerPlugin : IMixinConfigPlugin, Transformer {
 
     @Suppress("UnstableApiUsage")
     override fun onLoad(mixinPackage: String) {
+        logger.info("Initializing Fabric transformer")
+
         loader = javaClass.classLoader
         addUrl = loader
             .javaClass
@@ -92,37 +93,45 @@ class TransformerPlugin : IMixinConfigPlugin, Transformer {
         mixinClassName: String,
         mixinInfo: IMixinInfo
     ) {
+        val cached = transformerCache[targetClass.name]
+
         if (transformedClasses.contains(targetClassName)) return
+        if (cached != null) {
+            targetClass.version = cached.version
+            targetClass.access = cached.access
+            targetClass.name = cached.name
+            targetClass.signature = cached.signature
+            targetClass.superName = cached.superName
+            targetClass.interfaces = cached.interfaces
+            targetClass.sourceFile = cached.sourceFile
+            targetClass.sourceDebug = cached.sourceDebug
+            targetClass.module = cached.module
+            targetClass.outerClass = cached.outerClass
+            targetClass.outerMethod = cached.outerMethod
+            targetClass.outerMethodDesc = cached.outerMethodDesc
+            targetClass.visibleAnnotations = cached.visibleAnnotations
+            targetClass.invisibleAnnotations = cached.invisibleAnnotations
+            targetClass.visibleTypeAnnotations = cached.visibleTypeAnnotations
+            targetClass.invisibleTypeAnnotations = cached.invisibleTypeAnnotations
+            targetClass.attrs = cached.attrs
+            targetClass.innerClasses = cached.innerClasses
+            targetClass.nestHostClass = cached.nestHostClass
+            targetClass.nestMembers = cached.nestMembers
+            targetClass.permittedSubclasses = cached.permittedSubclasses
+            targetClass.recordComponents = cached.recordComponents
+            targetClass.fields = cached.fields
+            targetClass.methods = cached.methods
+        }
 
-        transformers.forEach { it.transform(targetClass) }
+        transformers
+            .filter {
+                val targets = it.targets
+
+                targets == null
+                        || targets.contains(targetClassName.replace("/", "."))
+            }
+            .forEach { it.transform(targetClass) }
         transformedClasses += targetClassName
-
-        val cached = transformerCache[targetClass.name] ?: return
-
-        targetClass.version = cached.version
-        targetClass.access = cached.access
-        targetClass.name = cached.name
-        targetClass.signature = cached.signature
-        targetClass.superName = cached.superName
-        targetClass.interfaces = cached.interfaces
-        targetClass.sourceFile = cached.sourceFile
-        targetClass.sourceDebug = cached.sourceDebug
-        targetClass.module = cached.module
-        targetClass.outerClass = cached.outerClass
-        targetClass.outerMethod = cached.outerMethod
-        targetClass.outerMethodDesc = cached.outerMethodDesc
-        targetClass.visibleAnnotations = cached.visibleAnnotations
-        targetClass.invisibleAnnotations = cached.invisibleAnnotations
-        targetClass.visibleTypeAnnotations = cached.visibleTypeAnnotations
-        targetClass.invisibleTypeAnnotations = cached.invisibleTypeAnnotations
-        targetClass.attrs = cached.attrs
-        targetClass.innerClasses = cached.innerClasses
-        targetClass.nestHostClass = cached.nestHostClass
-        targetClass.nestMembers = cached.nestMembers
-        targetClass.permittedSubclasses = cached.permittedSubclasses
-        targetClass.recordComponents = cached.recordComponents
-        targetClass.fields = cached.fields
-        targetClass.methods = cached.methods
     }
 
     override fun postApply(
@@ -153,6 +162,7 @@ class TransformerPlugin : IMixinConfigPlugin, Transformer {
         val stopwatch = Stopwatch.createUnstarted()
 
         return if (!isCached(hash)) {
+            logger.info("Cache does not contain an entry for $hash, beginning build")
             logger.info("Searching for LWJGL classes")
             stopwatch.start()
 
@@ -166,7 +176,6 @@ class TransformerPlugin : IMixinConfigPlugin, Transformer {
             stopwatch.stop()
 
             logger.info("Found ${resources.size} LWJGL classes in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)}ms")
-            logger.info("Building cache: $hash")
 
             stopwatch.reset()
             stopwatch.start()
@@ -181,15 +190,16 @@ class TransformerPlugin : IMixinConfigPlugin, Transformer {
 
             logger.info("Transforming ${classes.size} classes")
 
-            val transformed = runBlocking { buildCache(hash, classes) }
+            val transformed = buildCache(hash, classes)
 
             stopwatch.stop()
+
+            logger.info("Transformed ${transformed.first.size}/${classes.size} classes")
             logger.info("Built cache in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)}ms")
 
-            transformed
+            transformed.first
         } else {
-            logger.info("Loading cache: $hash")
-
+            logger.info("Loading classes from cache $hash")
             stopwatch.start()
 
             val cache = loadCache(hash)

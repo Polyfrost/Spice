@@ -1,8 +1,5 @@
 package org.polyfrost.spice.patcher.lwjgl
 
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.tree.ClassNode
 import org.polyfrost.spice.util.UrlByteArrayConnection
@@ -14,7 +11,6 @@ import java.security.MessageDigest
 import java.util.jar.JarInputStream
 
 class LwjglProvider {
-    private val cacheLock = Mutex()
     private val fileCache = mutableMapOf<String, ByteArray>()
 
     private val jar by lazy { JarInputStream(openStream() ?: return@lazy null) }
@@ -73,44 +69,36 @@ class LwjglProvider {
             ?.openStream()
 
     private fun readEntryUntil(path: String?): ByteArray? {
-        return runBlocking {
-            if (closed || jar == null) return@runBlocking null
+        if (closed || jar == null) return null
 
-            while (true) {
-                val entry = jar!!.nextEntry ?: run {
-                    jar!!.close()
-                    closed = true
+        while (true) {
+            val entry = jar!!.nextEntry ?: run {
+                jar!!.close()
+                closed = true
 
-                    return@runBlocking null
-                }
-
-                if (entry.isDirectory) continue
-
-                val length = entry.size.toInt()
-                val entryBuffer = ByteArray(length)
-
-                var offset = 0
-
-                while (true) {
-                    val read = jar!!.read(entryBuffer, offset, length - offset)
-
-                    offset += read
-
-                    if (offset == length) break
-                }
-
-                jar!!.closeEntry()
-
-                cacheLock.withLock {
-                    fileCache[entry.name] = entryBuffer
-                }
-
-                if (path != null && entry.name == path) return@runBlocking entryBuffer
+                return null
             }
 
-            // compiler isn't smart enough
-            @Suppress("UNREACHABLE_CODE")
-            null
+            val length = entry.size.toInt()
+
+            if (entry.isDirectory) continue
+            if (length == -1) continue
+
+            val entryBuffer = ByteArray(length)
+            var offset = 0
+
+            while (true) {
+                val read = jar!!.read(entryBuffer, offset, length - offset)
+
+                offset += read
+
+                if (offset == length) break
+            }
+
+            jar!!.closeEntry()
+            fileCache[entry.name] = entryBuffer
+
+            if (path != null && entry.name == path) return entryBuffer
         }
     }
 }
