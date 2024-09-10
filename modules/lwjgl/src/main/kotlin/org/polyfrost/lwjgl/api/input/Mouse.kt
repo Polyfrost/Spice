@@ -1,4 +1,4 @@
-package org.lwjgl.input.api
+package org.polyfrost.lwjgl.api.input
 
 interface IMouse {
     fun getX(): Int

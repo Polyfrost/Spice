@@ -5,6 +5,7 @@ import kotlinx.serialization.json.Json
 import org.apache.logging.log4j.LogManager
 import org.lwjgl.Version
 import org.lwjgl.glfw.GLFW.*
+import org.lwjgl.glfw.GLFWErrorCallback
 import org.lwjgl.openal.AL10.AL_VERSION
 import org.lwjgl.openal.AL10.alGetString
 import org.lwjgl.system.Configuration.GLFW_CHECK_THREAD0
@@ -73,6 +74,7 @@ object Spice {
         Runtime.getRuntime().addShutdownHook(Thread {
             if (options.needsSave) saveOptions()
         })
+        GLFWErrorCallback.createPrint(System.err).set()
 
         if (isMac()) GLFW_CHECK_THREAD0.set(false)
         if (!glfwInit()) throw RuntimeException("Failed to initialize GLFW")
@@ -96,6 +98,13 @@ object Spice {
         logger.info("Platform: ${platform.id}")
 
         initializeDebugSections()
+    }
+
+    @JvmStatic
+    fun cleanup() {
+        logger.info("Terminating GLFW")
+
+        glfwTerminate()
     }
 
     @JvmStatic
