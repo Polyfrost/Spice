@@ -2,6 +2,7 @@ package org.polyfrost.lwjgl.impl.display
 
 import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.glfw.GLFWImage
+import org.lwjgl.input.Keyboard
 import org.lwjgl.opengl.ContextAttribs
 import org.lwjgl.opengl.DisplayMode
 import org.lwjgl.opengl.Drawable
@@ -11,6 +12,7 @@ import org.lwjgl.system.MemoryUtil.NULL
 import org.lwjglx.system.Monitor
 import org.polyfrost.lwjgl.api.opengl.CreationParameters
 import org.polyfrost.lwjgl.api.opengl.IDisplay
+import org.polyfrost.lwjgl.impl.input.KeyboardImpl
 import org.polyfrost.lwjgl.platform.common.GLFWmonitor
 import org.polyfrost.lwjgl.platform.common.GLFWwindow
 import org.polyfrost.lwjgl.platform.common.opengl.GlfwContext
@@ -68,6 +70,8 @@ class OpenGlDisplay internal constructor(
 
         drawable = OpenGlDrawable(GlfwContext(handle!!, attribs))
         drawable.makeCurrent()
+        
+        Keyboard.implementation = KeyboardImpl(handle!!)
 
         glfwShowWindow(handle!!)
     }
