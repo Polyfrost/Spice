@@ -73,9 +73,7 @@ class KeyboardImpl(private val window: GLFWwindow) : IKeyboard {
         }
     }
 
-    override fun poll() {
-        glfwPollEvents()
-    }
+    override fun poll() {}
 
     @Suppress("UNUSED_PARAMETER")
     private fun keyHandler(window: Long, key: Int, scancode: Int, action: Int, mods: Int) {

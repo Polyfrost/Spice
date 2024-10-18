@@ -1,6 +1,8 @@
 package org.polyfrost.lwjgl.api.input
 
 interface IMouse {
+    fun destroy()
+    
     fun getX(): Int
     fun getY(): Int
 
@@ -17,15 +19,15 @@ interface IMouse {
     fun getEventNanoseconds(): Long
 
     fun next(): Boolean
+    fun poll()
 
+    fun getButtonCount(): Int
+    fun getButtonIndex(name: String): Int
+    fun getButtonName(button: Int): String
     fun isButtonDown(button: Int): Boolean
 
     fun isGrabbed(): Boolean
     fun setGrabbed(grabbed: Boolean)
-
-    fun isRawInputSupported(): Boolean
-
-    fun setRawInput(raw: Boolean)
 
     fun setCursorPosition(x: Int, y: Int)
 }
