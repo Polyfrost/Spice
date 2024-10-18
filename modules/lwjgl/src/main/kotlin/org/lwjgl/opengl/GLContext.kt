@@ -1,12 +1,18 @@
 package org.lwjgl.opengl
 
+import kotlin.concurrent.getOrSet
+
 object GLContext {
-    private val capabilities = mutableMapOf<Thread, ContextCapabilities>()
+    private val capabilities = ThreadLocal<ContextCapabilities>()
 
     @JvmStatic
     fun getCapabilities(): ContextCapabilities {
-        return capabilities.computeIfAbsent(Thread.currentThread()) { thread ->
+        return capabilities.getOrSet {
             ContextCapabilities()
         }
     }
+    
+    @JvmStatic
+    fun getFunctionAddress(function: String): Long =
+        GL.getFunctionProvider()?.getFunctionAddress(function) ?: 0
 }
