@@ -30,10 +30,9 @@ class LwjglProvider {
 
     val url = URL("spice", "", -1, "/", object : URLStreamHandler() {
         override fun openConnection(url: URL): URLConnection? {
-            return UrlByteArrayConnection(
-                readFile(url.path.replaceFirst("/", ""))
-                    ?: return null, url
-            )
+            val buffer = readFile(url.path.replaceFirst("/", "")) ?: return null
+            
+            return UrlByteArrayConnection(buffer, url)
         }
     })
 

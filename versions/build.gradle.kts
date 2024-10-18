@@ -13,7 +13,7 @@ plugins {
 }
 
 val tweakClass = "org.spongepowered.asm.launch.MixinTweaker"
-val transformerPlugin = "org.polyfrost.spice.platform.impl.forge.TransformerPlugin"
+val transformerPlugin = "org.polyfrost.spice.platform.impl.forge.asm.TransformerPlugin"
 
 base.archivesName = "Spice-${platform}"
 
