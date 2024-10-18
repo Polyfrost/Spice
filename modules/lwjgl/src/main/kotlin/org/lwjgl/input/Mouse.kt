@@ -21,6 +21,7 @@ object Mouse {
     @JvmStatic fun getY(): Int = implementation.getY()
     @JvmStatic fun getDX(): Int = implementation.getDX()
     @JvmStatic fun getDY(): Int = implementation.getDY()
+    @JvmStatic fun getDWheel(): Int = implementation.getDWheel()
 
     @JvmStatic fun getEventButton(): Int = implementation.getEventButton()
     @JvmStatic fun getEventButtonState(): Boolean = implementation.getEventButtonState()

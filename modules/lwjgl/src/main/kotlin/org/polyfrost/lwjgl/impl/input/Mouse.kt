@@ -52,7 +52,7 @@ class MouseImpl(private val window: GLFWwindow, private val display: IDisplay) :
     }
     
     fun setRawInput(raw: Boolean) {
-        glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, raw.toInt());
+        glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, raw.toInt())
     }
     
     override fun destroy() {}
@@ -61,6 +61,7 @@ class MouseImpl(private val window: GLFWwindow, private val display: IDisplay) :
     override fun getY(): Int = display.getHeight() - y
     override fun getDX(): Int = xDelta.toInt()
     override fun getDY(): Int = yDelta.toInt()
+    override fun getDWheel(): Int = scrollDelta
 
     override fun getEventButton(): Int = currentEvent?.button ?: -1
     override fun getEventButtonState(): Boolean = currentEvent?.buttonState ?: false
@@ -87,6 +88,7 @@ class MouseImpl(private val window: GLFWwindow, private val display: IDisplay) :
     override fun poll() {
         xDelta = 0.0
         yDelta = 0.0
+        scrollDelta = 0
     }
 
     override fun getButtonCount(): Int = size
@@ -113,6 +115,8 @@ class MouseImpl(private val window: GLFWwindow, private val display: IDisplay) :
 
     @Suppress("UNUSED_PARAMETER")
     private fun mouseButtonHandler(window: Long, button: Int, action: Int, mods: Int) {
+        buttonStates[button] = action == GLFW_PRESS
+        
         events.addLast(
             createEvent(
                 button,
@@ -154,7 +158,7 @@ class MouseImpl(private val window: GLFWwindow, private val display: IDisplay) :
 
     @Suppress("UNUSED_PARAMETER")
     private fun mouseScrollHandler(window: Long, x: Double, y: Double) {
-        scrollDelta = y.toInt()
+        scrollDelta += y.toInt()
 
         events.addLast(
             createEvent(

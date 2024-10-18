@@ -8,6 +8,7 @@ interface IMouse {
 
     fun getDX(): Int
     fun getDY(): Int
+    fun getDWheel(): Int
 
     fun getEventButton(): Int
     fun getEventButtonState(): Boolean
