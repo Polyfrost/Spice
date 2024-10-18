@@ -11,7 +11,7 @@ class Monitor internal constructor(internal val handle: Long) {
         val modes = glfwGetVideoModes(handle)!!
         val modeArray = Array<GLFWVidMode?>(modes.limit()) { null }
 
-        for (i in 0..modes.limit()) modeArray[i] = modes.get(i)
+        for (i in 0..<modes.limit()) modeArray[i] = modes.get(i)
 
         return modeArray
             .filterNotNull()
