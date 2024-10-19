@@ -2,7 +2,7 @@ package org.polyfrost.spice.platform.impl.forge.asm
 //#if FORGE
 
 import com.google.common.base.Stopwatch
-import net.minecraft.launchwrapper.LaunchClassLoader
+import net.minecraft.launchwrapper.Launch
 import net.minecraft.launchwrapper.LogWrapper
 import org.apache.logging.log4j.LogManager
 import org.objectweb.asm.ClassReader
@@ -29,14 +29,7 @@ class ClassTransformer : LaunchTransformer, Transformer {
 
     private val transformerCache: Map<String, ByteArray>
 
-    private val loader =
-        ClassTransformer::class.java
-            .classLoader
-            .let {
-                assert(it is LaunchClassLoader) { "Class loader isn't LaunchClassLoader..?" }
-
-                it as LaunchClassLoader
-            }
+    private val loader = Launch.classLoader
 
     private val logger = LogManager.getLogger("Spice/Forge/Transformer")
     private val transformers = mutableListOf<IClassTransformer>()

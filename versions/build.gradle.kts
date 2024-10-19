@@ -12,8 +12,7 @@ plugins {
     `java-library`
 }
 
-val tweakClass = "org.spongepowered.asm.launch.MixinTweaker"
-val transformerPlugin = "org.polyfrost.spice.platform.impl.forge.asm.TransformerPlugin"
+val tweakClass = "org.polyfrost.spice.platform.impl.forge.asm.SpiceTweaker"
 
 base.archivesName = "Spice-${platform}"
 
@@ -26,7 +25,6 @@ loom {
     runConfigs {
         "client" {
             if (project.platform.isLegacyForge) {
-                property("fml.coreMods.load", transformerPlugin)
                 programArgs("--tweakClass", tweakClass)
             }
             property("mixin.debug.export", "true")
@@ -104,8 +102,6 @@ tasks {
         if (platform.isLegacyForge) {
             manifest {
                 attributes += mapOf(
-                    "FMLCorePluginContainsFMLMod" to "Yes, yes it does",
-                    "FMLCorePlugin" to transformerPlugin,
                     "ModSide" to "CLIENT",
                     "ForceLoadAsMod" to true,
                     "TweakOrder" to "0",
