@@ -31,5 +31,5 @@ tasks.jar {
 }
 
 tasks.shadowJar {
-    archiveFileName = "lwjgl.jar"
+    archiveFileName = "lwjgl-bundle"
 }

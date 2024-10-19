@@ -64,7 +64,7 @@ class LwjglProvider {
     private fun openStream(): InputStream? =
         LwjglProvider::class.java
             .classLoader
-            .getResource("lwjgl.jar")
+            .getResource("lwjgl-bundle")
             ?.openStream()
 
     private fun readEntryUntil(path: String?): ByteArray? {

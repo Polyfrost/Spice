@@ -4,6 +4,11 @@ import org.polyfrost.spice.patcher.util.AudioHelper
 
 @Suppress("unused")
 object OpenAlFixes {
+    private val deviceHandleField =
+        Class
+            .forName("org.lwjgl.openal.ALCdevice")
+            .getDeclaredField("device")
+    
     @JvmStatic
     fun create() {
         try {
@@ -15,4 +20,7 @@ object OpenAlFixes {
 
     @JvmStatic
     fun destroyContext() = AudioHelper.destroyContext()
+    
+    @JvmStatic
+    fun mapDevice(device: Any): Long = deviceHandleField.getLong(device)
 }

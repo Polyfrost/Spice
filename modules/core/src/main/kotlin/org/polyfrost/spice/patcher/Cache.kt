@@ -9,6 +9,7 @@ import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodNode
 import org.polyfrost.spice.patcher.lwjgl.LibraryTransformer
 import org.polyfrost.spice.patcher.lwjgl.LwjglTransformer
+import org.polyfrost.spice.patcher.lwjgl.MemoryStackTransformer
 import org.polyfrost.spice.spiceDirectory
 import org.polyfrost.spice.util.SpiceClassWriter
 import java.util.jar.JarFile
@@ -55,7 +56,8 @@ fun buildCache(hash: String, `in`: List<ClassNode>): Pair<Map<String, ClassNode>
     // todo: abuse coroutines.
     val transformers = arrayOf(
         LwjglTransformer,
-        LibraryTransformer
+        LibraryTransformer,
+        MemoryStackTransformer
     )
 
     val transformable = mutableSetOf<String>()

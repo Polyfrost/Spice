@@ -5,11 +5,92 @@ import org.apache.logging.log4j.LogManager
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.FieldNode
+import org.objectweb.asm.tree.InsnList
 import org.objectweb.asm.tree.MethodNode
 import org.polyfrost.spice.platform.api.IClassTransformer
 
+private data class InjectedMethod(
+    val name: String,
+    val desc: String,
+    val access: Int,
+    val instructions: InsnList
+)
+
 object LwjglTransformer : IClassTransformer {
     private val logger = LogManager.getLogger("Spice/Transformer")!!
+    private val injectableMethods = mapOf(
+        "org/lwjgl/openal/AL" to listOf(
+            InjectedMethod(
+                "create",
+                "()V",
+                Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC + Opcodes.ACC_SYNTHETIC,
+                asm {
+                    invokestatic(
+                        "org/polyfrost/spice/patcher/fixes/OpenAlFixes",
+                        "create",
+                        "()V"
+                    )
+                    _return
+                }
+            ),
+            InjectedMethod(
+                "destroy",
+                "()V",
+                Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC + Opcodes.ACC_SYNTHETIC,
+                asm {
+                    invokestatic(
+                        "org/polyfrost/spice/patcher/fixes/OpenAlFixes",
+                        "destroyContext",
+                        "()V"
+                    )
+                    _return
+                }
+            )
+        ),
+        "org/lwjgl/openal/ALC10" to listOf(
+            InjectedMethod(
+                "alcGetString",
+                "(Lorg/lwjgl/openal/ALCdevice;I)Ljava/lang/String;",
+                Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC + Opcodes.ACC_SYNTHETIC,
+                asm { 
+                    aload(0)
+                    invokestatic(
+                        "org/polyfrost/spice/patcher/fixes/OpenAlFixes",
+                        "mapDevice",
+                        "(Ljava/lang/Object;)J",
+                    )
+                    iload(1)
+                    invokestatic(
+                        "org/lwjgl/openal/ALC10",
+                        "alGetString",
+                        "(JI)Ljava/lang/String;"
+                    )
+                    
+                    areturn
+                }
+            )
+        ),
+        "org/lwjgl/opengl/GL20" to listOf(
+            InjectedMethod(
+                "glShaderSource",
+                "(ILjava/nio/ByteBuffer;)V",
+                Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC + Opcodes.ACC_SYNTHETIC,
+                asm {
+                    iload(0)
+                    aload(1)
+
+                    invokestatic(
+                        "org/polyfrost/spice/patcher/fixes/OpenGlFixes",
+                        "glShaderSource",
+                        "(ILjava/nio/ByteBuffer;)V"
+                    )
+
+                    _return
+                }
+            )
+        )
+    )
+    
     override val targets = null
 
     val provider = LwjglProvider()
@@ -88,44 +169,6 @@ object LwjglTransformer : IClassTransformer {
         )
 
         when (node.name) {
-            "org/lwjgl/openal/AL" -> {
-                var foundDestroy = true
-
-                val createMethod = MethodNode()
-                val destroyMethod = node
-                    .methods
-                    .find {
-                        (it as MethodNode).name == "destroy" && it.desc == "()V"
-                    } as? MethodNode ?: run {
-                    foundDestroy = false
-
-                    MethodNode()
-                }
-
-                createMethod.name = "create"
-                createMethod.desc = "()V"
-                createMethod.access = Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC + Opcodes.ACC_SYNTHETIC
-
-                destroyMethod.name = "destroy"
-                destroyMethod.desc = "()V"
-                destroyMethod.access = Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC + Opcodes.ACC_SYNTHETIC
-
-                createMethod.instructions = asm {
-                    invokestatic("org/polyfrost/spice/patcher/fixes/OpenAlFixes", "create", "()V")
-
-                    _return
-                }
-
-                destroyMethod.instructions = asm {
-                    invokestatic("org/polyfrost/spice/patcher/fixes/OpenAlFixes", "destroyContext", "()V")
-
-                    _return
-                }
-
-                node.methods.add(createMethod)
-                if (!foundDestroy) node.methods.add(destroyMethod)
-            }
-
             "org/lwjgl/openal/AL10",
             "org/lwjgl/opengl/GL11",
             "org/lwjgl/opengl/GL20",
@@ -137,30 +180,23 @@ object LwjglTransformer : IClassTransformer {
                             if (second == method.desc) method.name = first
                         }
                     }
-
-                if (node.name == "org/lwjgl/opengl/GL20") {
-                    val method = MethodNode()
-
-                    method.name = "glShaderSource"
-                    method.desc = "(ILjava/nio/ByteBuffer;)V"
-                    method.access = Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC + Opcodes.ACC_SYNTHETIC
-
-                    method.instructions = asm {
-                        iload(0)
-                        aload(1)
-
-                        invokestatic(
-                            "org/polyfrost/spice/patcher/fixes/OpenGlFixes",
-                            method.name,
-                            method.desc
-                        )
-
-                        _return
-                    }
-
-                    node.methods.add(method)
-                }
             }
+        }
+        
+        injectableMethods[node.name]?.forEach { injection ->
+            node.methods.removeIf { method ->
+                method as MethodNode
+                method.name == injection.name && method.desc == injection.desc
+            }
+            
+            val method = MethodNode()
+            
+            method.name = injection.name
+            method.desc = injection.desc
+            method.access = injection.access
+            method.instructions = injection.instructions
+            
+            node.methods.add(method)
         }
     }
 }

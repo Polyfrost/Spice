@@ -16,8 +16,9 @@ import org.polyfrost.spice.platform.api.IClassTransformer
 import org.polyfrost.spice.platform.api.Transformer
 import org.polyfrost.spice.platform.bootstrapTransformer
 import org.polyfrost.spice.platform.impl.forge.util.LaunchWrapperLogger
-import org.polyfrost.spice.util.collectResources
+import org.polyfrost.spice.platform.impl.forge.util.relaunch
 import org.polyfrost.spice.util.SpiceClassWriter
+import org.polyfrost.spice.util.collectResources
 import java.net.URL
 import java.util.concurrent.TimeUnit
 import net.minecraft.launchwrapper.IClassTransformer as LaunchTransformer
@@ -64,7 +65,7 @@ class ClassTransformer : LaunchTransformer, Transformer {
 
     override fun transform(name: String, transformedName: String, bytes: ByteArray?): ByteArray? {
         if (bytes == null) return null
-
+        
         @Suppress("NAME_SHADOWING")
         val bytes = transformerCache[name.replace(".", "/")] ?: bytes
         val validTransformers = transformers.filter {
@@ -135,7 +136,12 @@ class ClassTransformer : LaunchTransformer, Transformer {
             logger.info("Transformed ${transformed.first.size}/${classes.size} classes")
             logger.info("Built cache in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)}ms")
 
-            transformed.second
+            logger.info("Relaunching..")
+            
+            // todo: figure out an actual elegant solution to classes not being loaded properly lol
+            relaunch()
+            
+            return transformed.second
         } else {
             logger.info("Loading classes from cache $hash")
             stopwatch.start()
