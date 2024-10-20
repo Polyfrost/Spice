@@ -1,10 +1,9 @@
 {
-  "required": true,
+  "required": false,
   "minVersion": "0.7",
   "package": "org.polyfrost.spice.mixin",
   "compatibilityLevel": "JAVA_8",
   "client": [
-    "common.GuiOverlayDebugMixin",
     "common.MinecraftMixin",
     "lwjgl3.GuiControlsMixin",
     "lwjgl3.MinecraftMixin"

@@ -1,6 +1,7 @@
 package org.lwjgl.opengl
 
 import org.lwjgl.BufferUtils
+import org.lwjglx.system.Monitor
 import org.polyfrost.lwjgl.api.opengl.CreationParameters
 import org.polyfrost.lwjgl.api.opengl.IDisplay
 import org.polyfrost.lwjgl.impl.display.OpenGlDisplay
@@ -69,9 +70,9 @@ object Display {
     @JvmStatic
     fun setDisplayModeAndFullscreen(mode: DisplayMode) = implementation.setDisplayModeAndFullscreen(mode)
     @JvmStatic
-    fun getDesktopDisplayMode(): DisplayMode = implementation.getDesktopDisplayMode()
+    fun getDesktopDisplayMode(): DisplayMode = Monitor.getPrimaryMonitor().getDisplayMode()
     @JvmStatic
-    fun getAvailableDisplayModes(): Array<DisplayMode> = implementation.getAvailableDisplayModes()
+    fun getAvailableDisplayModes(): Array<DisplayMode> = Monitor.getPrimaryMonitor().getAvailableDisplayModes()
     @JvmStatic
     fun getDrawable(): Drawable = implementation.getDrawable()
     @JvmStatic
