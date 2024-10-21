@@ -19,6 +19,8 @@ object Mouse {
 
     @JvmStatic fun getX(): Int = implementation.getX()
     @JvmStatic fun getY(): Int = implementation.getY()
+    @JvmStatic fun setX(x: Int) = implementation.setX(x)
+    @JvmStatic fun setY(y: Int) = implementation.setY(y)
     @JvmStatic fun getDX(): Int = implementation.getDX()
     @JvmStatic fun getDY(): Int = implementation.getDY()
     @JvmStatic fun getDWheel(): Int = implementation.getDWheel()
@@ -30,6 +32,8 @@ object Mouse {
     @JvmStatic fun getEventDY(): Int = implementation.getEventDY()
     @JvmStatic fun getEventX(): Int = implementation.getEventX()
     @JvmStatic fun getEventY(): Int = implementation.getEventY()
+    @JvmStatic fun setEventX(x: Int) = implementation.setEventX(x)
+    @JvmStatic fun setEventY(y: Int) = implementation.setEventY(y)
     @JvmStatic fun getEventNanoseconds(): Long = implementation.getEventNanoseconds()
 
     @JvmStatic fun next(): Boolean = implementation.next()
@@ -40,8 +44,12 @@ object Mouse {
     @JvmStatic fun getButtonName(button: Int): String = implementation.getButtonName(button)
     @JvmStatic fun isButtonDown(button: Int): Boolean = implementation.isButtonDown(button)
 
+    @JvmStatic fun hasWheel(): Boolean = true
+
     @JvmStatic fun isGrabbed(): Boolean = implementation.isGrabbed()
     @JvmStatic fun setGrabbed(grabbed: Boolean) = implementation.setGrabbed(grabbed)
 
     @JvmStatic fun setCursorPosition(x: Int, y: Int) = implementation.setCursorPosition(x, y)
+
+    @JvmStatic fun isInsideWindow(): Boolean = implementation.isInsideWindow()
 }

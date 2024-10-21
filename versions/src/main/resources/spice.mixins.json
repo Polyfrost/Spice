@@ -3,8 +3,10 @@
   "minVersion": "0.7",
   "package": "org.polyfrost.spice.mixin",
   "compatibilityLevel": "JAVA_8",
+  "verbose": true,
   "client": [
     "common.MinecraftMixin",
+    "lwjgl3.compat.EssentialGlobalMouseOverrideMixin",
     "lwjgl3.GuiControlsMixin",
     "lwjgl3.MinecraftMixin"
   ],

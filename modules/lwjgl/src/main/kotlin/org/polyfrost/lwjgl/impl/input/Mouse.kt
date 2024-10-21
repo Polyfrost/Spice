@@ -1,6 +1,7 @@
 package org.polyfrost.lwjgl.impl.input
 
 import org.lwjgl.glfw.GLFW.*
+import org.lwjgl.opengl.Display
 import org.lwjgl.system.MemoryStack
 import org.lwjglx.input.RawInput
 import org.polyfrost.lwjgl.api.input.IMouse
@@ -59,6 +60,12 @@ class MouseImpl(private val window: GLFWwindow, private val display: IDisplay) :
 
     override fun getX(): Int = x
     override fun getY(): Int = display.getHeight() - y
+    override fun setX(x: Int) {
+        this.x = x
+    }
+    override fun setY(y: Int) {
+        this.y = display.getHeight() - y
+    }
     override fun getDX(): Int = xDelta.toInt()
     override fun getDY(): Int = yDelta.toInt()
     override fun getDWheel(): Int = scrollDelta
@@ -70,6 +77,12 @@ class MouseImpl(private val window: GLFWwindow, private val display: IDisplay) :
     override fun getEventDY(): Int = currentEvent?.yDelta ?: 0
     override fun getEventX(): Int = currentEvent?.x ?: 0
     override fun getEventY(): Int = currentEvent?.y ?: 0
+    override fun setEventX(x: Int) {
+        currentEvent?.x = x
+    }
+    override fun setEventY(y: Int) {
+        currentEvent?.y = y
+    }
     override fun getEventNanoseconds(): Long = currentEvent?.timestamp ?: 0
 
     override fun next(): Boolean {
@@ -112,6 +125,8 @@ class MouseImpl(private val window: GLFWwindow, private val display: IDisplay) :
         this.x = x
         this.y = y
     }
+
+    override fun isInsideWindow() = Display.isVisible()
 
     @Suppress("UNUSED_PARAMETER")
     private fun mouseButtonHandler(window: Long, button: Int, action: Int, mods: Int) {
