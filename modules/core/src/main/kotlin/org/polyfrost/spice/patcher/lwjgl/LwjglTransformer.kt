@@ -3,6 +3,7 @@ package org.polyfrost.spice.patcher.lwjgl
 import net.weavemc.loader.api.util.asm
 import org.apache.logging.log4j.LogManager
 import org.objectweb.asm.Opcodes
+import org.objectweb.asm.Opcodes.ACC_NATIVE
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.FieldNode
 import org.objectweb.asm.tree.InsnList
@@ -18,6 +19,7 @@ private data class InjectedMethod(
 
 object LwjglTransformer : IClassTransformer {
     private val logger = LogManager.getLogger("Spice/Transformer")!!
+    
     private val injectableMethods = mapOf(
         "org/lwjgl/openal/AL" to listOf(
             InjectedMethod(
@@ -90,6 +92,38 @@ object LwjglTransformer : IClassTransformer {
             )
         )
     )
+    private val overloadSuffixes = listOf(
+        "v", "i_v", "b",
+        "s", "i", "i64",
+        "f", "d", "ub",
+        "us", "ui", "ui64"
+    ).flatMap { suffix ->
+        if (!suffix.endsWith("v")) listOf(suffix, suffix + "v")
+        else listOf(suffix)
+    }.sortedByDescending { suffix -> suffix.length }
+    
+    private val extensionPrefixes = listOf(
+        "ARB",
+        "NV",
+        "NVX",
+        "ATI",
+        "3DLABS",
+        "SUN",
+        "SGI",
+        "SGIX",
+        "SGIS",
+        "INTEL",
+        "3DFX",
+        "IBM",
+        "MESA",
+        "GREMEDY",
+        "OML",
+        "OES",
+        "PGI",
+        "I3D",
+        "INGR",
+        "MTX"
+    ).sortedByDescending { suffix -> suffix.length }
     
     override val targets = null
 
@@ -113,6 +147,19 @@ object LwjglTransformer : IClassTransformer {
         node.sourceDebug = patch.sourceDebug
 
         node.version = patch.version
+        
+        val oldMethods = node.methods.filterIsInstance<MethodNode>()
+        val patchMethods = patch.methods.filterIsInstance<MethodNode>()
+        
+        val addedMethods = patchMethods
+            .filter { method -> 
+                !oldMethods.any { old -> old.name == method.name && old.desc == method.desc }
+            }
+        val removedMethods = oldMethods
+            .filter { method ->
+                !patchMethods.any { patch -> patch.name == method.name && patch.desc == method.desc }
+            }
+
         node.methods.clear()
 
         if (node.name != "org/lwjgl/opengl/ContextCapabilities") node.fields.clear()
@@ -136,52 +183,30 @@ object LwjglTransformer : IClassTransformer {
                 if (!node.fields.any { (it as FieldNode).name == (field as FieldNode).name && it.desc == field.desc })
                     node.fields.add(field)
             }
-
-        val renames = mapOf(
-            // org.lwjgl.openal.AL10
-            "alListenerfv" to Pair("alListener", "(ILjava/nio/FloatBuffer;)V"),
-            "alSourcefv" to Pair("alSource", "(IILjava/nio/FloatBuffer;)V"),
-            "alSourceStopv" to Pair("alSourceStop", "(Ljava/nio/IntBuffer;)V"),
-            // org.lwjgl.opengl.GL11
-            "glGetFloatv" to Pair("glGetFloat", "(ILjava/nio/FloatBuffer;)V"),
-            "glGetIntegerv" to Pair("glGetInteger", "(ILjava/nio/IntBuffer;)V"),
-            "glFogfv" to Pair("glFog", "(ILjava/nio/FloatBuffer;)V"),
-            "glLightfv" to Pair("glLight", "(IILjava/nio/FloatBuffer;)V"),
-            "glLightModelfv" to Pair("glLightModel", "(ILjava/nio/FloatBuffer;)V"),
-            "glMultMatrixf" to Pair("glMultMatrix", "(Ljava/nio/FloatBuffer;)V"),
-            "glTexEnvfv" to Pair("glTexEnv", "(IILjava/nio/FloatBuffer;)V"),
-            // org.lwjgl.opengl.GL20
-            "glUniform1fv" to Pair("glUniform1", "(ILjava/nio/FloatBuffer;)V"),
-            "glUniform2fv" to Pair("glUniform2", "(ILjava/nio/FloatBuffer;)V"),
-            "glUniform3fv" to Pair("glUniform3", "(ILjava/nio/FloatBuffer;)V"),
-            "glUniform4fv" to Pair("glUniform4", "(ILjava/nio/FloatBuffer;)V"),
-            "glUniformMatrix4fv" to Pair("glUniformMatrix4", "(IZLjava/nio/FloatBuffer;)V"),
-            // org.lwjgl.opengl.GL21
-            "glTexGenfv" to Pair("glTexGen", "(IILjava/nio/FloatBuffer;)V"),
-            // org.lwjgl.opengl.ARBShaderObjects
-            "glGetObjectParameterfvARB" to Pair("glGetObjectParameterARB", "(IILjava/nio/FloatBuffer;)V"),
-            "glGetObjectParameterivARB" to Pair("glGetObjectParameterARB", "(IILjava/nio/IntBuffer;)V"),
-            "glUniform1fvARB" to Pair("glUniform1ARB", "(ILjava/nio/FloatBuffer;)V"),
-            "glUniform2fvARB" to Pair("glUniform2ARB", "(ILjava/nio/FloatBuffer;)V"),
-            "glUniform3fvARB" to Pair("glUniform3ARB", "(ILjava/nio/FloatBuffer;)V"),
-            "glUniform4fvARB" to Pair("glUniform4ARB", "(ILjava/nio/FloatBuffer;)V"),
-            "glUniformMatrix4fvARB" to Pair("glUniformMatrix4ARB", "(IZLjava/nio/FloatBuffer;)V"),
-        )
-
-        when (node.name) {
-            "org/lwjgl/openal/AL10",
-            "org/lwjgl/opengl/GL11",
-            "org/lwjgl/opengl/GL20",
-            "org/lwjgl/opengl/ARBShaderObjects" -> {
-                node
-                    .methods
-                    .forEach { method ->
-                        renames[(method as MethodNode).name]?.run {
-                            if (second == method.desc) method.name = first
-                        }
-                    }
+        
+        val renames = removedMethods
+            .filter { method ->
+                method.access and ACC_NATIVE == 0
+                && (
+                    method.name.startsWith("al")
+                    || method.name.startsWith("gl")
+                )
             }
-        }
+            .mapNotNull { method ->
+                addedMethods.find { added ->
+                    added.desc == method.desc
+                    && stripOverloadSuffix(added.name, getFunctionEndIndex(added.name)) == method.name
+                }?.let { added -> added.name to Pair(method.name, method.desc) }
+            }
+            .toMap()
+
+        node
+            .methods
+            .forEach { method ->
+                renames[(method as MethodNode).name]?.run {
+                    if (second == method.desc) method.name = first
+                }
+            }
         
         injectableMethods[node.name]?.forEach { injection ->
             node.methods.removeIf { method ->
@@ -199,4 +224,19 @@ object LwjglTransformer : IClassTransformer {
             node.methods.add(method)
         }
     }
+    
+    private fun stripOverloadSuffix(name: String, end: Int = name.length): String {
+        val suffix = overloadSuffixes.find { suffix ->
+            if (end != name.length) name.substring(0..<end).endsWith(suffix)
+            else name.endsWith(suffix)
+        } ?: return name
+        
+        return if (end != name.length) { name.substring(0..<end-suffix.length) + name.substring(end) }
+        else { name.substring(0..<end-suffix.length) }
+    }
+    
+    private fun getFunctionEndIndex(name: String): Int =
+        extensionPrefixes
+            .find { prefix -> name.endsWith(prefix) }
+            ?.let { prefix -> name.length - prefix.length } ?: name.length
 }
