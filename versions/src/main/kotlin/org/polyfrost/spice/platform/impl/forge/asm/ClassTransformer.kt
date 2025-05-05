@@ -16,10 +16,10 @@ import org.polyfrost.spice.platform.api.IClassTransformer
 import org.polyfrost.spice.platform.api.Transformer
 import org.polyfrost.spice.platform.bootstrapTransformer
 import org.polyfrost.spice.platform.impl.forge.util.LaunchWrapperLogger
-import org.polyfrost.spice.platform.impl.forge.util.relaunch
 import org.polyfrost.spice.util.SpiceClassWriter
 import org.polyfrost.spice.util.collectResources
 import java.net.URL
+import java.net.URLClassLoader
 import java.util.concurrent.TimeUnit
 import net.minecraft.launchwrapper.IClassTransformer as LaunchTransformer
 
@@ -50,15 +50,16 @@ class ClassTransformer : LaunchTransformer, Transformer {
 
         val stopwatch = Stopwatch.createStarted()
 
-        transformerCache = loadCache()
         bootstrapTransformer(this)
+        transformerCache = loadCache()
 
         logger.info("Ready in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)}ms")
     }
 
     override fun transform(name: String, transformedName: String, bytes: ByteArray?): ByteArray? {
         if (bytes == null) return null
-        
+        if (name.startsWith("org.lwjgl.")) logger.info("Transforming $name")
+
         @Suppress("NAME_SHADOWING")
         val bytes = transformerCache[name.replace(".", "/")] ?: bytes
         val validTransformers = transformers.filter {
@@ -85,8 +86,29 @@ class ClassTransformer : LaunchTransformer, Transformer {
 
     override fun appendToClassPath(url: URL) {
         logger.info("Appending $url to the classpath")
-
         loader.addURL(url)
+
+        val parent = loader::class.java.classLoader
+        if (parent is URLClassLoader) {
+            URLClassLoader::class.java
+                .getDeclaredMethod("addURL", URL::class.java)
+                .also { method -> method.isAccessible = true }(parent, url)
+        } else {
+            parent::class.java
+                .let { clazz ->
+                    try {
+                        clazz.getDeclaredField("ucp")
+                    } catch (_: NoSuchFieldException) {
+                        clazz.superclass.getDeclaredField("ucp")
+                    }
+                }
+                .also { field -> field.isAccessible = true }
+                .get(loader)
+                .let { classpath ->
+                    classpath::class.java
+                        .getDeclaredMethod("addURL", URL::class.java)(loader, url)
+                }
+        }
     }
 
     private fun loadCache(): Map<String, ByteArray> {
@@ -129,11 +151,6 @@ class ClassTransformer : LaunchTransformer, Transformer {
             logger.info("Transformed ${transformed.first.size}/${classes.size} classes")
             logger.info("Built cache in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)}ms")
 
-            logger.info("Relaunching..")
-            
-            // todo: figure out an actual elegant solution to classes not being loaded properly lol
-            relaunch()
-            
             return transformed.second
         } else {
             logger.info("Loading classes from cache $hash")
