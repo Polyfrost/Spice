@@ -5,6 +5,8 @@ interface IMouse {
     
     fun getX(): Int
     fun getY(): Int
+    fun setX(x: Int)
+    fun setY(y: Int)
 
     fun getDX(): Int
     fun getDY(): Int
@@ -17,6 +19,8 @@ interface IMouse {
     fun getEventDY(): Int
     fun getEventX(): Int
     fun getEventY(): Int
+    fun setEventX(x: Int)
+    fun setEventY(y: Int)
     fun getEventNanoseconds(): Long
 
     fun next(): Boolean
@@ -31,4 +35,5 @@ interface IMouse {
     fun setGrabbed(grabbed: Boolean)
 
     fun setCursorPosition(x: Int, y: Int)
+    fun isInsideWindow(): Boolean
 }

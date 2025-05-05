@@ -93,7 +93,7 @@ class GlfwContext(private val window: GLFWwindow, private val attribs: ContextAt
 
             glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, attribs.getMajorVersion())
             glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, attribs.getMinorVersion())
-            
+
             glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_FALSE)
         }
     }
