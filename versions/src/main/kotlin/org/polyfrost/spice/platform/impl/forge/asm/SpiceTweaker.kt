@@ -21,10 +21,11 @@ class SpiceTweaker : ITweaker {
     }
 
     override fun injectIntoClassLoader(classLoader: LaunchClassLoader) {
+        Launch.classLoader.registerTransformer(LwjglAccessTracer::class.java.name)
+        Launch.classLoader.registerTransformer(ClassTransformer::class.java.name)
+        
         MixinBootstrap.init()
         Mixins.addConfiguration("spice.mixins.json")
-        
-        Launch.classLoader.registerTransformer(ClassTransformer::class.java.name)
     }
 
     override fun getLaunchTarget(): String? = null
