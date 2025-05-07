@@ -36,6 +36,19 @@ object LwjglTransformer : IClassTransformer {
                 }
             ),
             InjectedMethod(
+                "isCreated",
+                "()Z",
+                Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC + Opcodes.ACC_SYNTHETIC,
+                asm {
+                    invokestatic(
+                        "org/polyfrost/spice/patcher/fixes/OpenAlFixes",
+                        "isCreated",
+                        "()Z"
+                    )
+                    ireturn
+                }
+            ),
+            InjectedMethod(
                 "destroy",
                 "()V",
                 Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC + Opcodes.ACC_SYNTHETIC,

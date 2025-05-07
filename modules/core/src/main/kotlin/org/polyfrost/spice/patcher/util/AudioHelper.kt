@@ -44,6 +44,12 @@ object AudioHelper {
         alcMakeContextCurrent(contextHandle)
         AL.createCapabilities(deviceCapabilities)
     }
+    
+    @JvmStatic
+    @Suppress("unused")
+    fun isCreated(): Boolean {
+        return contextHandle != -1L
+    }
 
     @JvmStatic
     @Suppress("unused")

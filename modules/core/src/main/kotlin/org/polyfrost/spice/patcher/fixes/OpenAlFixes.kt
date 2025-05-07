@@ -17,6 +17,9 @@ object OpenAlFixes {
             throw ex
         }
     }
+    
+    @JvmStatic
+    fun isCreated() = AudioHelper.isCreated()
 
     @JvmStatic
     fun destroyContext() = AudioHelper.destroyContext()
