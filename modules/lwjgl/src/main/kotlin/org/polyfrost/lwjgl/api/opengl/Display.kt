@@ -171,5 +171,7 @@ interface IDisplay {
 internal data class CreationParameters(
     val displayMode: DisplayMode?,
     val title: String?,
-    val resizable: Boolean?
+    val resizable: Boolean?,
+    val swapInterval: Int?,
+    val fullscreen: Boolean?
 )

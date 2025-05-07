@@ -5,17 +5,21 @@ import org.lwjglx.system.Monitor
 import org.polyfrost.lwjgl.api.opengl.CreationParameters
 import org.polyfrost.lwjgl.api.opengl.IDisplay
 import org.polyfrost.lwjgl.impl.display.OpenGlDisplay
+import org.polyfrost.lwjgl.util.toInt
 import java.awt.Canvas
 import java.nio.ByteBuffer
 
 object Display {
-    private lateinit var implementation: IDisplay
+    private var implementation: IDisplay? = null
 
     private var icon = arrayOf<ByteBuffer>()
 
     private var title: String? = null
     private var resizable: Boolean? = null
     private var displayMode: DisplayMode? = null
+    private var vsync: Boolean? = null
+    private var swapInterval: Int? = null
+    private var fullscreen: Boolean? = null
 
     /**
      * Create the OpenGL context with the given minimum parameters.
@@ -31,19 +35,21 @@ object Display {
             CreationParameters(
                 displayMode,
                 title,
-                resizable
+                resizable,
+                vsync?.toInt() ?: swapInterval ?: 0,
+                fullscreen
             ),
             format,
             attribs
         )
 
-        if (icon.isNotEmpty()) implementation.setIcon(icon)
+        if (icon.isNotEmpty()) implementation!!.setIcon(icon)
     }
 
     /**
      * Create the OpenGL context with the given minimum parameters.
      *
-     * @param format the desired pixel formt
+     * @param format the desired pixel format
      * @param sharedDrawable the drawable with which the display shares its context
      * @param attribs the context's attributes
      */
@@ -54,130 +60,172 @@ object Display {
     }
 
     @JvmStatic
-    fun getAdapter(): String = implementation.getAdapter()
+    fun getAdapter(): String = useImpl { getAdapter() } ?: "N/A"
     @JvmStatic
-    fun getVersion(): String = implementation.getVersion()
+    fun getVersion(): String = useImpl { getVersion() } ?: "N/A"
     @JvmStatic
-    fun getDisplayMode(): DisplayMode = implementation.getDisplayMode()
+    fun getDisplayMode(): DisplayMode = useImpl { getDisplayMode() } ?: displayMode ?: throw NullPointerException()
 
     @JvmStatic
     fun setDisplayMode(mode: DisplayMode) {
-        if (!isCreated()) {
-            displayMode = mode
-        } else implementation.setDisplayMode(mode)
+        withImpl({ setDisplayMode(mode) }) { displayMode = mode }
     }
 
     @JvmStatic
-    fun setDisplayModeAndFullscreen(mode: DisplayMode) = implementation.setDisplayModeAndFullscreen(mode)
+    fun setDisplayModeAndFullscreen(mode: DisplayMode) {
+        withImpl({ setDisplayModeAndFullscreen(mode) }) {
+            displayMode = mode
+            fullscreen = true
+        }
+    }
+    
     @JvmStatic
     fun getDesktopDisplayMode(): DisplayMode = Monitor.getPrimaryMonitor().getDisplayMode()
     @JvmStatic
     fun getAvailableDisplayModes(): Array<DisplayMode> = Monitor.getPrimaryMonitor().getAvailableDisplayModes()
     @JvmStatic
-    fun getDrawable(): Drawable = implementation.getDrawable()
+    fun getDrawable(): Drawable = useImpl { getDrawable() } ?: throw NullPointerException()
     @JvmStatic
-    fun getParent(): Canvas? = implementation.getParent()
+    fun getParent(): Canvas? = useImpl { getParent() }
     @JvmStatic
-    fun setParent(parent: Canvas?) = implementation.setParent(parent)
+    fun setParent(parent: Canvas?) {
+        withImpl { setParent(parent) }
+    }
+    
     @JvmStatic
-    fun setInitialBackground(red: Float, green: Float, blue: Float) =
-        implementation.setInitialBackground(red, green, blue)
+    fun setInitialBackground(red: Float, green: Float, blue: Float) {
+        withImpl { setInitialBackground(red, green, blue) }
+    }
 
     @JvmStatic
-    fun getWidth(): Int = implementation.getWidth()
+    fun getWidth(): Int = useImpl { getWidth() } ?: 0
     @JvmStatic
-    fun getHeight(): Int = implementation.getHeight()
+    fun getHeight(): Int = useImpl { getHeight() } ?: 0
     @JvmStatic
-    fun getX(): Int = implementation.getX()
+    fun getX(): Int = useImpl { getX() } ?: 0
     @JvmStatic
-    fun getY(): Int = implementation.getY()
+    fun getY(): Int = useImpl { getY() } ?: 0
+    
     @JvmStatic
-    fun setLocation(x: Int, y: Int) = implementation.setLocation(x, y)
+    fun setLocation(x: Int, y: Int) {
+        withImpl { setLocation(x, y) }
+    }
+    
     @JvmStatic
-    fun getTitle(): String = implementation.getTitle()
+    fun getTitle(): String = useImpl { getTitle() } ?: "LWJGL"
 
     @JvmStatic
     fun setTitle(title: String) {
-        if (!isCreated()) {
-            this.title = title
-        } else implementation.setTitle(title)
+        withImpl({ setTitle(title) }) { this.title = title }
     }
 
     @JvmStatic
-    fun getPixelScaleFactor(): Float = implementation.getPixelScaleFactor()
+    fun getPixelScaleFactor(): Float = useImpl { getPixelScaleFactor() } ?: 1.0f
+    
     @JvmStatic
-    fun setDisplayConfiguration(gamma: Float, brightness: Float, contrast: Float) =
-        implementation.setDisplayConfiguration(gamma, brightness, contrast)
+    fun setDisplayConfiguration(gamma: Float, brightness: Float, contrast: Float) {
+        withImpl { setDisplayConfiguration(gamma, brightness, contrast) }
+    }
 
     @JvmStatic
-    fun isActive(): Boolean = implementation.isActive()
+    fun isActive(): Boolean = useImpl { isActive() } ?: false
     @JvmStatic
-    fun isCreated(): Boolean = ::implementation.isInitialized
+    fun isCreated(): Boolean = implementation != null
 
     @JvmStatic
-    fun setIcon(icons: Array<ByteBuffer>): Int {
-        return if (!isCreated()) {
+    fun setIcon(icons: Array<ByteBuffer>): Int =
+        useImpl({ setIcon(icons) }) {
             icon = icons.map { icon ->
                 val clone = BufferUtils.createByteBuffer(icon.limit())
                 val start = icon.position()
-
+    
                 icon.position(0)
-
+    
                 clone.put(icon)
                 clone.flip()
-
+    
                 icon.position(start)
-
+    
                 clone
             }.toTypedArray()
             0
-        } else implementation.setIcon(icons)
-    }
+        }
 
     @JvmStatic
-    fun isCurrent(): Boolean = implementation.isCurrent()
+    fun isCurrent(): Boolean = useImpl { isCurrent() } ?: false
     @JvmStatic
-    fun isDirty(): Boolean = implementation.isDirty()
+    fun isDirty(): Boolean = useImpl { isDirty() } ?: false
     @JvmStatic
-    fun isVisible(): Boolean = implementation.isVisible()
+    fun isVisible(): Boolean = useImpl { isVisible() } ?: false
     @JvmStatic
-    fun isResizable(): Boolean =
-        if (isCreated()) implementation.isResizable()
-        else resizable ?: false
+    fun isResizable(): Boolean = useImpl { isResizable() } ?: resizable ?: true
 
     @JvmStatic
     fun setResizable(resizable: Boolean) {
-        if (!isCreated()) {
-            this.resizable = resizable
-        } else implementation.setResizable(resizable)
+        withImpl({ setResizable(resizable) }) { this.resizable = resizable }
     }
 
     @JvmStatic
-    fun isFullscreen(): Boolean = implementation.isFullscreen()
+    fun isFullscreen(): Boolean =
+        useImpl { isFullscreen() } ?: fullscreen ?: false
+    
     @JvmStatic
-    fun setFullscreen(fullscreen: Boolean) = implementation.setFullscreen(fullscreen)
+    fun setFullscreen(enabled: Boolean) {
+        withImpl({ setFullscreen(enabled) }) { fullscreen = enabled }
+    }
+    
     @JvmStatic
-    fun isCloseRequested(): Boolean = implementation.isCloseRequested()
+    fun isCloseRequested(): Boolean = useImpl { isCloseRequested() } ?: false
     @JvmStatic
-    fun wasResized(): Boolean = implementation.wasResized()
+    fun wasResized(): Boolean = useImpl { wasResized() } ?: false
+    
     @JvmStatic
-    fun makeCurrent() = implementation.makeCurrent()
+    fun makeCurrent() {
+        withImpl { makeCurrent() }
+    }
+    
     @JvmStatic
-    fun releaseContext() = implementation.releaseContext()
+    fun releaseContext() {
+        withImpl { Display.releaseContext() }
+    }
+    
     @JvmStatic
-    fun destroy() = implementation.destroy()
+    fun destroy() {
+        withImpl { destroy() }
+    }
+    
     @JvmStatic
-    fun sync(fps: Int) = implementation.sync(fps)
+    fun sync(fps: Int) {
+        withImpl { sync(fps) }
+    }
+    
     @JvmStatic
-    fun setSwapInterval(interval: Int) = implementation.setSwapInterval(interval)
+    fun setSwapInterval(interval: Int) {
+        withImpl({ setSwapInterval(interval) }) { swapInterval = interval }
+    }
+        
     @JvmStatic
-    fun setVSyncEnabled(sync: Boolean) = implementation.setVSyncEnabled(sync)
+    fun setVSyncEnabled(sync: Boolean) {
+        withImpl({ setVSyncEnabled(sync) }) { vsync = sync }
+    }
+        
     @JvmStatic
-    fun update() = implementation.update()
+    fun update() { withImpl { update() } }
     @JvmStatic
-    fun update(process: Boolean) = implementation.update(process)
+    fun update(process: Boolean) { withImpl { update(process) } }
+        
     @JvmStatic
-    fun processMessages() = implementation.processMessages()
+    fun processMessages() { withImpl { processMessages() } }
     @JvmStatic
-    fun swapBuffers() = implementation.swapBuffers()
+    fun swapBuffers() { withImpl { swapBuffers() } }
+
+    @JvmStatic
+    private fun withImpl(block: IDisplay.() -> Unit) = implementation?.block()
+    @JvmStatic
+    private fun withImpl(block: IDisplay.() -> Unit, otherwise: () -> Unit) = implementation?.block() ?: otherwise()
+            
+    @JvmStatic
+    private fun <R> useImpl(block: IDisplay.() -> R): R? = implementation?.block()
+    @JvmStatic
+    private fun <R> useImpl(block: IDisplay.() -> R, otherwise: () -> R): R = implementation?.block() ?: otherwise()
 }

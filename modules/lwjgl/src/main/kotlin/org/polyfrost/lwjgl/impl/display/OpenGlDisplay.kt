@@ -35,22 +35,20 @@ class OpenGlDisplay internal constructor(
     private var title = "LWJGL"
 
     private var fullscreenOn: GLFWmonitor? = null
+    private var previouslyFullscreen = false
 
     private var width = 0
     private var height = 0
     private var x = 0
     private var y = 0
 
-    private var savedX = 0
-    private var savedY = 0
-
-    private var savedDisplayMode: DisplayMode? = null
-
     private var resizable = creationParameters.resizable ?: true
     private var didResize = true
+    private var primaryDisplayMode = Monitor.getPrimaryMonitor().getDisplayMode()
 
-    private var displayMode = creationParameters.displayMode ?: DisplayMode(640, 480)
-
+    private var displayMode = creationParameters.displayMode ?: DisplayMode(640, 480, primaryDisplayMode.getFrequency(), primaryDisplayMode.getBitsPerPixel())
+    private var modeNeedsUpdate = false
+    
     init {
         glfwDefaultWindowHints()
 
@@ -59,7 +57,7 @@ class OpenGlDisplay internal constructor(
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE)
         glfwWindowHint(GLFW_FOCUS_ON_SHOW, GLFW_TRUE)
         glfwWindowHint(GLFW_RESIZABLE, (creationParameters.resizable ?: true).toInt())
-
+        
         width = displayMode.getWidth()
         height = displayMode.getHeight()
         title = creationParameters.title ?: "LWJGL"
@@ -67,7 +65,6 @@ class OpenGlDisplay internal constructor(
         handle = glfwCreateWindow(
             width, height, title, NULL, NULL
         )
-
         attachCallbacks()
 
         drawable = OpenGlDrawable(GlfwContext(handle!!, attribs))
@@ -77,6 +74,10 @@ class OpenGlDisplay internal constructor(
         Mouse.implementation = MouseImpl(handle!!, this)
 
         glfwShowWindow(handle!!)
+        centerWindow()
+        updateMode()
+        
+        if (!didResize) didResize = width != displayMode.getWidth() || height != displayMode.getHeight()
     }
 
     override fun getAdapter(): String = ""
@@ -86,35 +87,14 @@ class OpenGlDisplay internal constructor(
     override fun getDisplayMode(): DisplayMode = displayMode
 
     override fun setDisplayMode(mode: DisplayMode) {
-        handle?.let {
-            if (fullscreenOn != null) {
-                glfwSetWindowMonitor(
-                    it,
-                    fullscreenOn!!,
-                    x,
-                    y,
-                    mode.getWidth(),
-                    mode.getHeight(),
-                    mode.getFrequency()
-                )
-            } else {
-                glfwSetWindowSize(it, displayMode.getWidth(), displayMode.getHeight())
-
-                MemoryStack.stackPush().use { stack ->
-                    val widthPtr = stack.mallocInt(1)
-                    val heightPtr = stack.mallocInt(1)
-
-                    glfwGetWindowSize(it, widthPtr, heightPtr)
-
-                    this.width = widthPtr.get()
-                    this.height = heightPtr.get()
-                }
-            }
-        }
+        displayMode = mode
+        modeNeedsUpdate = true
     }
 
     override fun setDisplayModeAndFullscreen(mode: DisplayMode) {
-        setFullscreen(true)
+        val monitor = Monitor.getPrimaryMonitor()
+        fullscreenOn = monitor.handle
+        
         setDisplayMode(mode)
     }
 
@@ -145,16 +125,7 @@ class OpenGlDisplay internal constructor(
     override fun setLocation(x: Int, y: Int) {
         handle?.let {
             glfwSetWindowPos(it, x, y)
-
-            MemoryStack.stackPush().use { stack ->
-                val xPtr = stack.mallocInt(1)
-                val yPtr = stack.mallocInt(1)
-
-                glfwGetWindowPos(it, xPtr, yPtr)
-
-                this.x = xPtr.get()
-                this.y = yPtr.get()
-            }
+            updatePosition()
         }
     }
 
@@ -210,35 +181,17 @@ class OpenGlDisplay internal constructor(
     override fun isFullscreen(): Boolean = fullscreenOn != null
 
     override fun setFullscreen(fullscreen: Boolean) {
-        handle?.let {
-            if (fullscreen) {
-                val monitor = Monitor.getPrimaryMonitor()
+        val monitor = Monitor.getPrimaryMonitor()
 
+        if (fullscreen) {
+            if (fullscreenOn != monitor.handle) {
                 fullscreenOn = monitor.handle
-
-                savedX = x
-                savedY = y
-                savedDisplayMode = displayMode
-
-                glfwSetWindowMonitor(
-                    it,
-                    monitor.handle,
-                    0,
-                    0,
-                    displayMode.getWidth(),
-                    displayMode.getHeight(),
-                    displayMode.getFrequency()
-                )
-            } else {
-                glfwSetWindowMonitor(
-                    it,
-                    NULL,
-                    savedX,
-                    savedY,
-                    savedDisplayMode!!.getWidth(),
-                    savedDisplayMode!!.getHeight(),
-                    savedDisplayMode!!.getFrequency()
-                )
+                modeNeedsUpdate = true
+            }
+        } else {
+            if (fullscreenOn != null) {
+                fullscreenOn = null
+                modeNeedsUpdate = true
             }
         }
     }
@@ -276,6 +229,9 @@ class OpenGlDisplay internal constructor(
     override fun update(process: Boolean) {
         processMessages()
         swapBuffers()
+        
+        // todo: maybe hacky? review lwjgl2 implementation of full screen
+        if (modeNeedsUpdate) updateMode()
     }
 
     override fun processMessages() {
@@ -294,15 +250,118 @@ class OpenGlDisplay internal constructor(
     override fun setReady() {
         handle?.let { glfwShowWindow(it) }
     }
+    
+    private fun centerWindow() {
+        val primaryDisplayMode = Monitor.getPrimaryMonitor().getDisplayMode()
+
+        setLocation((primaryDisplayMode.getWidth() / 2) - (width / 2), (primaryDisplayMode.getHeight()) / 2 - (height / 2))
+    }
+    
+    private fun updateMode() {
+        modeNeedsUpdate = false
+        
+        handle?.let {
+            if (fullscreenOn != null) {
+                if (!previouslyFullscreen) {
+                    previouslyFullscreen = true
+                }
+
+                glfwSetWindowMonitor(
+                    it,
+                    fullscreenOn!!,
+                    0,
+                    0,
+                    displayMode.getWidth(),
+                    displayMode.getHeight(),
+                    displayMode.getFrequency()
+                )
+                updateSize()
+            } else {
+                if (previouslyFullscreen) {
+                    glfwSetWindowMonitor(
+                        it,
+                        NULL,
+                        0,
+                        0,
+                        displayMode.getWidth(),
+                        displayMode.getHeight(),
+                        0
+                    )
+
+                    previouslyFullscreen = false
+
+                    updateSize()
+                    centerWindow()
+                } else {
+                    glfwSetWindowSize(it, displayMode.getWidth(), displayMode.getHeight())
+
+                    updateSize()
+                    updatePosition()
+                }
+            }
+        }
+    }
+    
+    private fun updatePosition() {
+        handle?.let {
+            MemoryStack.stackPush().use { stack ->
+                val previousX = x
+                val previousY = y
+                
+                val xPtr = stack.mallocInt(1)
+                val yPtr = stack.mallocInt(1)
+
+                glfwGetWindowPos(it, xPtr, yPtr)
+
+                x = xPtr.get()
+                y = yPtr.get()
+                
+                if (x != previousX || y != previousY) onMove(it, x, y)
+            }
+        }
+    }
+    
+    private fun updateSize() {
+        handle?.let {
+            MemoryStack.stackPush().use { stack ->
+                val previousWidth = width
+                val previousHeight = height
+                
+                val widthPtr = stack.mallocInt(1)
+                val heightPtr = stack.mallocInt(1)
+
+                glfwGetWindowSize(it, widthPtr, heightPtr)
+                
+                width = widthPtr.get()
+                height = heightPtr.get()
+                
+                if (width != previousWidth || height != previousHeight) { onResize(it, width, height) }
+            }
+        }
+    }
 
     private fun onResize(window: Long, width: Int, height: Int) {
         this.width = width
         this.height = height
 
+        displayMode = DisplayMode(
+            width,
+            height,
+            displayMode.getFrequency(),
+            displayMode.getBitsPerPixel()
+        )
         didResize = true
+    }
+    
+    private fun onMove(window: Long, x: Int, y: Int) {
+        this.x = x
+        this.y = y
     }
 
     private fun attachCallbacks() {
-        handle?.let { glfwSetFramebufferSizeCallback(it, ::onResize) }
+        handle?.let {
+            glfwSetFramebufferSizeCallback(it, ::onResize)
+            glfwSetWindowPosCallback(it, ::onMove)
+        }
     }
 }
