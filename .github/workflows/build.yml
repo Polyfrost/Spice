@@ -1,35 +1,51 @@
-# Automatically build the project and run any configured tests for every push
-# and submitted pull request. This can help catch issues that only occur on
-# certain Java versions, and provides a first line of defence against bad commits.
+# Build Workflow
 
-name: Build
+name: Build with Gradle
 
-on: [ push, pull_request, workflow_dispatch ]
+on:
+  pull_request:
+  workflow_dispatch:
+  push:
+
+concurrency:
+  group: ${{ github.head_ref || format('{0}-{1}', github.ref, github.run_number) }}
+  cancel-in-progress: true
 
 jobs:
   build:
-    strategy:
-      matrix:
-        java: [
-          "17" # Latest version
-        ]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: gradle/wrapper-validation-action@v1
-      - uses: actions/setup-java@v3
-        with:
-          distribution: "temurin"
-          java-version: ${{ matrix.java }}
+    name: Build
 
-      - name: Grant execute permission
-        run: chmod +x ./gradlew
-      - name: Sync Gradle
-        run: ./gradlew
-      - name: Build with Gradle
-        run: ./gradlew build
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4.0.0
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
-          name: compiled
-          path: build/libs/*.jar
+          fetch-depth: 10
+
+      - name: Set up JDK 8, 16, 17, 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: |
+            8
+            16
+            17
+            21
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            **/loom-cache
+            **/prebundled-jars
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Chmod Gradle
+        run: chmod +x ./gradlew
+
+      - name: Build
+        run: ./gradlew build --no-daemon
